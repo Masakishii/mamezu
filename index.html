@@ -25,14 +25,8 @@
     }
     .pasteboard-bg {
       background-color: #242426;
-      background-image: radial-gradient(#38383c 1px, transparent 1px);
+      background-image: radial-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px);
       background-size: 16px 16px;
-    }
-    .tool-btn-active {
-      background-color: #0284c7 !important;
-      color: #ffffff !important;
-      border-color: #38bdf8 !important;
-      box-shadow: 0 0 0 1px #38bdf8;
     }
     ::-webkit-scrollbar {
       width: 6px;
@@ -43,18 +37,20 @@
     }
     ::-webkit-scrollbar-thumb {
       background: #3f3f46;
-      border-radius: 3px;
+      border-radius: 9999px;
     }
   </style>
 </head>
-<body class="flex flex-col h-[100dvh] w-screen select-none">
+<body class="flex flex-col h-[100dvh] w-screen select-none overflow-hidden">
 
   <!-- ==================== 1. トップアプリバー ==================== -->
-  <header class="h-10 bg-[#141416] border-b border-[#2e2e32] px-2 flex items-center justify-between gap-1.5 shrink-0 z-30 text-xs">
-    <!-- 左：タイトル ＆ 接続状態 -->
-    <div class="flex items-center gap-1.5 min-w-0">
-      <span class="px-2 py-0.5 rounded bg-emerald-600 text-white font-black tracking-tight text-[11px] shrink-0">📐 豆図スタジオ Pro</span>
-      <span id="hdr-site-badge" class="hidden sm:inline-block px-2 py-0.5 rounded bg-[#262629] border border-[#3a3a3e] text-[10px] font-bold text-slate-300 truncate max-w-[140px]">ローカル単体モード</span>
+  <header class="h-10 bg-[#141416] border-b border-[#2e2e32] px-2.5 flex items-center justify-between gap-2 shrink-0 z-30 text-xs">
+    <!-- 左：タイトル ＆ 接続状態バッジ -->
+    <div class="flex items-center gap-2 min-w-0">
+      <span class="font-black text-sky-400 tracking-tight whitespace-nowrap flex items-center gap-1">
+        <span>📐</span><span>豆図スタジオ Pro</span>
+      </span>
+      <span id="hdr-site-badge" class="hidden sm:inline-block px-2 py-0.5 rounded-full bg-[#242429] border border-[#3a3a3e] text-[10px] font-bold text-slate-300 truncate max-w-[140px]">ローカル単体モード</span>
     </div>
 
     <!-- 中央：編集履歴・複製・グループ・レイヤー順 -->
@@ -82,26 +78,38 @@
     </div>
   </header>
 
-  <!-- ==================== 2. 複数豆図シート切替バー（PCは横並びタブ ／ スマホは省スペースプルダウン自動切替） ==================== -->
+  <!-- ==================== 2. 複数豆図シート切替バー（PC・タブレットは横並びタブ ／ スマホは省スペースプルダウン自動切替） ==================== -->
   <div id="sheet-tabs-bar" class="bg-[#1b1b1e] border-b border-[#2e2e32] px-2 py-1 flex items-center justify-between gap-2 shrink-0 z-20 text-[11px]">
-    <!-- PC・タブレット用：横並びシートタブ -->
-    <div id="sheet-tabs-list" class="hidden md:flex items-center gap-1 overflow-x-auto flex-1 min-w-0"></div>
-
-    <!-- スマホ用：省スペースプルダウン＋前後ボタン -->
-    <div class="flex md:hidden items-center gap-1 flex-1 min-w-0">
-      <button onclick="switchMamezuSheet(state.currentSheetIndex - 1)" class="px-2 py-1 rounded bg-[#262629] border border-[#3a3a3e] font-bold cursor-pointer">◀</button>
-      <select id="sel-mamezu-sheet" onchange="switchMamezuSheet(Number(this.value))" class="flex-1 min-w-0 bg-[#141416] border border-sky-600/70 rounded px-2 py-1 font-extrabold text-sky-200 outline-none cursor-pointer"></select>
-      <button onclick="switchMamezuSheet(state.currentSheetIndex + 1)" class="px-2 py-1 rounded bg-[#262629] border border-[#3a3a3e] font-bold cursor-pointer">▶</button>
+    <!-- PC・タブレット用：横並びシートタブ ＋ [＋ 新規豆図] [📋 複製] 一体並び -->
+    <div id="sheet-pc-tabs-area" class="flex items-center gap-1 overflow-x-auto flex-1 min-w-0">
+      <div id="sheet-tabs-list" class="flex items-center gap-1 shrink-0"></div>
+      <button onclick="addNewMamezuSheet(false)" class="px-2 py-0.5 rounded bg-sky-700 hover:bg-sky-600 text-white font-extrabold whitespace-nowrap cursor-pointer shrink-0" title="新しい豆図シートを追加">＋ 新規豆図</button>
+      <button onclick="addNewMamezuSheet(true)" class="px-2 py-0.5 rounded bg-[#262629] hover:bg-[#343438] border border-[#3a3a3e] text-slate-200 font-bold whitespace-nowrap cursor-pointer shrink-0" title="現在の豆図を複製">📋 複製</button>
     </div>
 
-    <!-- 右側：現在シートのタイトル編集・新規追加・複製・削除・全シート一括PDF -->
+    <!-- スマホ用：省スペースプルダウン [◀] [📐 1/3: 豆図名 ▾] [▶] [＋追加] -->
+    <div id="sheet-mobile-dropdown-area" class="hidden items-center gap-1 flex-1 min-w-0">
+      <button onclick="switchMamezuSheet(state.currentSheetIndex - 1)" class="px-2 py-1 rounded bg-[#262629] active:bg-slate-700 border border-[#3a3a3e] font-bold cursor-pointer shrink-0">◀</button>
+      <select id="sel-mamezu-sheet" onchange="switchMamezuSheet(Number(this.value))" class="flex-1 min-w-0 bg-[#141416] border border-sky-600/70 rounded px-2 py-1 font-extrabold text-sky-200 outline-none cursor-pointer"></select>
+      <button onclick="switchMamezuSheet(state.currentSheetIndex + 1)" class="px-2 py-1 rounded bg-[#262629] active:bg-slate-700 border border-[#3a3a3e] font-bold cursor-pointer shrink-0">▶</button>
+      <button onclick="addNewMamezuSheet(false)" class="px-2 py-1 rounded bg-sky-700 active:bg-sky-600 text-white font-extrabold whitespace-nowrap cursor-pointer shrink-0">＋追加</button>
+      <button onclick="toggleMobileSheetRenameBox()" class="px-1.5 py-1 rounded bg-[#262629] active:bg-slate-700 border border-[#3a3a3e] font-bold cursor-pointer shrink-0" title="豆図タイトルを変更">✏️</button>
+    </div>
+
+    <!-- 右側：現在シートのタイトル編集・削除・全シート一括PDF -->
     <div class="flex items-center gap-1 shrink-0">
-      <input id="inp-current-sheet-title" type="text" placeholder="豆図タイトル" oninput="renameCurrentMamezuSheet(this.value)" class="hidden sm:block w-28 lg:w-36 bg-[#141416] border border-[#3a3a3e] rounded px-2 py-0.5 text-white font-bold outline-none focus:border-sky-400" />
-      <button onclick="addNewMamezuSheet(false)" class="px-2 py-0.5 rounded bg-sky-700 hover:bg-sky-600 text-white font-extrabold cursor-pointer" title="新しい豆図シートを追加">＋ 新規豆図</button>
-      <button onclick="addNewMamezuSheet(true)" class="hidden sm:inline-block px-2 py-0.5 rounded bg-[#262629] hover:bg-[#343438] border border-[#3a3a3e] font-bold cursor-pointer" title="現在の豆図を複製">📋 複製</button>
+      <input id="inp-current-sheet-title" type="text" placeholder="豆図タイトル" oninput="renameCurrentMamezuSheet(this.value)" class="hidden md:block w-32 lg:w-40 bg-[#141416] border border-[#3a3a3e] rounded px-2 py-0.5 text-white font-bold outline-none focus:border-sky-400" />
       <button id="btn-del-sheet" onclick="deleteCurrentMamezuSheet()" class="hidden px-2 py-0.5 rounded bg-rose-950 hover:bg-rose-800 border border-rose-800 text-rose-200 font-bold cursor-pointer" title="現在の豆図シートを削除">🗑️ 削除</button>
       <button onclick="downloadAllSheetsPdfFile()" class="px-2 py-0.5 rounded bg-rose-700 hover:bg-rose-600 text-white font-extrabold cursor-pointer" title="すべての豆図シートを1つのPDFファイルにまとめて保存">📚 全頁PDF</button>
     </div>
+  </div>
+
+  <!-- スマホ用：インライン豆図タイトル編集バー（✏️タップで開閉） -->
+  <div id="mobile-sheet-rename-bar" class="hidden bg-[#141416] border-b border-sky-700/70 px-2 py-1.5 flex items-center gap-1.5 shrink-0 z-20 text-xs">
+    <span class="text-sky-300 font-bold whitespace-nowrap">豆図名:</span>
+    <input id="inp-mobile-sheet-title" type="text" placeholder="豆図タイトルを入力" oninput="renameCurrentMamezuSheet(this.value)" class="flex-1 min-w-0 bg-[#222226] border border-[#3a3a3e] rounded px-2 py-1 text-white font-bold outline-none focus:border-sky-400" />
+    <button onclick="addNewMamezuSheet(true)" class="px-2 py-1 rounded bg-[#262629] border border-[#3a3a3e] font-bold text-slate-200 whitespace-nowrap cursor-pointer">📋複製</button>
+    <button onclick="toggleMobileSheetRenameBox(false)" class="px-2.5 py-1 rounded bg-emerald-700 text-white font-extrabold cursor-pointer">完了</button>
   </div>
 
   <!-- ==================== 3. 上部コントロールバー（PC・タブレット表示） ==================== -->
@@ -172,14 +180,12 @@
     </div>
 
     <!-- 条件付きオプション群 -->
-    <!-- 平行線間隔 -->
     <div id="opt-parallel-box" class="hidden inline-flex items-center gap-1 bg-cyan-950/80 border border-cyan-700 rounded px-2 py-0.5">
       <span class="text-cyan-200 font-bold">複線幅:</span>
       <input id="inp-parallel-gap" type="number" min="4" max="120" value="22" oninput="setParallelGap(Number(this.value))" class="w-12 bg-[#141416] border border-cyan-600 rounded px-1 text-white font-mono" />
       <span class="text-cyan-300">px</span>
     </div>
 
-    <!-- バルーン連番オプション -->
     <div id="opt-balloon-box" class="hidden inline-flex items-center gap-1 bg-amber-950/80 border border-amber-700 rounded px-2 py-0.5">
       <span class="text-amber-200 font-bold">連番:</span>
       <select id="sel-balloon-style" onchange="setBalloonStyle(this.value)" class="bg-[#141416] border border-amber-600 rounded px-1 font-bold text-white outline-none cursor-pointer">
@@ -192,7 +198,6 @@
       <button onclick="toggleSelectedBalloonCase()" class="px-1.5 py-0.2 bg-[#2a2a2f] hover:bg-[#3a3a40] rounded font-bold cursor-pointer" title="大文字・小文字変換">Aa</button>
     </div>
 
-    <!-- 寸法線オプション -->
     <div id="opt-dim-box" class="hidden inline-flex items-center gap-1 bg-sky-950/80 border border-sky-700 rounded px-2 py-0.5">
       <span class="text-sky-200 font-bold">位置:</span>
       <select id="sel-dim-text-pos" onchange="setDimTextPos(this.value)" class="bg-[#141416] border border-sky-600 rounded px-1 font-bold text-white outline-none cursor-pointer">
@@ -210,14 +215,12 @@
       <button onclick="openScaleCalibModal()" class="px-1.5 py-0.2 bg-emerald-700 hover:bg-emerald-600 text-white rounded font-bold cursor-pointer">📏 縮尺合せ</button>
     </div>
 
-    <!-- 角度寸法オプション -->
     <div id="opt-angle-box" class="hidden inline-flex items-center gap-1 bg-purple-950/80 border border-purple-700 rounded px-2 py-0.5">
       <button onclick="toggleSelectedAngleReflex()" class="px-2 py-0.2 bg-purple-700 hover:bg-purple-600 text-white rounded font-bold cursor-pointer">🔄 内角/外角</button>
       <button onclick="adjustSelectedAngleArcR(-10)" class="px-1.5 py-0.2 bg-[#2a2a2f] rounded font-bold cursor-pointer">弧-</button>
       <button onclick="adjustSelectedAngleArcR(10)" class="px-1.5 py-0.2 bg-[#2a2a2f] rounded font-bold cursor-pointer">弧+</button>
     </div>
 
-    <!-- 半径・直径寸法オプション -->
     <div id="opt-radius-box" class="hidden inline-flex items-center gap-1 bg-teal-950/80 border border-teal-700 rounded px-2 py-0.5">
       <select id="sel-radius-kind" onchange="setRadiusDimKind(this.value)" class="bg-[#141416] border border-teal-600 rounded px-1 font-bold text-white outline-none cursor-pointer">
         <option value="radius">R 半径表示</option>
@@ -225,7 +228,6 @@
       </select>
     </div>
 
-    <!-- テキスト枠線・サイズオプション -->
     <div id="opt-textbox-box" class="hidden inline-flex items-center gap-1 bg-emerald-950/80 border border-emerald-700 rounded px-2 py-0.5">
       <span class="text-emerald-200 font-bold">💬文字枠:</span>
       <select id="sel-text-box-style" onchange="setTextBoxStyle(this.value)" class="bg-[#141416] border border-emerald-600 rounded px-1 font-bold text-white outline-none cursor-pointer"></select>
@@ -234,7 +236,6 @@
       <button onclick="adjustSelectedTextFontSize(2)" class="px-1.5 py-0.2 bg-[#2a2a2f] rounded font-bold cursor-pointer">A+</button>
     </div>
 
-    <!-- 引き出し線個別書式オプション -->
     <div id="opt-leader-box" class="hidden inline-flex items-center gap-1 bg-rose-950/80 border border-rose-700 rounded px-2 py-0.5">
       <span class="text-rose-200 font-bold">🏷️引出線:</span>
       <span class="text-[10px] text-slate-300">線色</span>
@@ -330,23 +331,19 @@
         </div>
 
         <div class="flex items-center gap-2 shrink-0">
-          <!-- 角度スナップ -->
           <select id="sel-angle-snap" onchange="state.angleSnap=this.value;" class="bg-[#262629] border border-[#3a3a3e] rounded px-1.5 py-0.5 font-bold text-amber-200 outline-none cursor-pointer" title="角度スナップ">
             <option value="off">角度:自由</option>
             <option value="90">角度:90°</option>
             <option value="15" selected>角度:15°</option>
           </select>
 
-          <!-- CADスナップ -->
           <div class="inline-flex items-center bg-[#262629] border border-[#3a3a3e] rounded overflow-hidden">
             <button id="btn-cad-snap" onclick="toggleCadSnap()" class="px-2 py-0.5 font-bold text-emerald-300 cursor-pointer">🧲 スナップ: ON</button>
             <button onclick="openSnapSettingsModal()" class="px-1.5 py-0.5 border-l border-[#3a3a3e] hover:bg-[#343438] cursor-pointer" title="スナップ項目個別設定">⚙️</button>
           </div>
 
-          <!-- 複数選択 -->
           <button id="btn-multi-select" onclick="toggleMultiSelectMode()" class="px-2 py-0.5 rounded bg-[#262629] border border-[#3a3a3e] font-bold text-slate-300 cursor-pointer">☑️ 複数選択</button>
 
-          <!-- 不透明度 -->
           <div class="inline-flex items-center gap-1">
             <span class="text-slate-400">💧</span>
             <input id="inp-obj-opacity" type="range" min="10" max="100" value="100" oninput="setObjectOpacity(Number(this.value))" class="w-14 accent-sky-500 cursor-pointer" />
@@ -404,14 +401,12 @@
           </label>
         </div>
 
-        <!-- PDFページ送りバー -->
         <div id="pdf-page-nav-box" class="hidden flex items-center justify-between bg-[#141416] border border-rose-700/70 rounded px-2 py-1">
           <button onclick="changeImportedPdfPage(-1)" class="px-1.5 bg-[#2b2b30] rounded font-bold cursor-pointer">◀</button>
           <span id="lbl-pdf-page" class="font-mono text-rose-200 font-bold">1 / 1 頁</span>
           <button onclick="changeImportedPdfPage(1)" class="px-1.5 bg-[#2b2b30] rounded font-bold cursor-pointer">▶</button>
         </div>
 
-        <!-- トリミングボタン -->
         <button id="btn-start-crop" onclick="startVisualCropMode()" class="hidden w-full py-1.5 bg-amber-600 hover:bg-amber-500 text-white rounded font-extrabold cursor-pointer">✂️ 選択図面をトリミング</button>
         <div id="box-crop-confirm" class="hidden grid grid-cols-2 gap-1">
           <button onclick="applyVisualCrop()" class="py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded font-extrabold cursor-pointer">✅ 切抜確定</button>
@@ -456,10 +451,8 @@
 
   <!-- ==================== 5. スマホ専用GUI（2行コンテキスト書式バー ＋ 下部5ボタン） ==================== -->
   <div id="mobile-bottom-gui" class="hidden flex-col bg-[#141416] border-t border-[#2e2e32] shrink-0 z-30">
-    <!-- 選択オブジェクト連動・2行コンテキスト書式バー -->
     <div id="mobile-context-2row-bar" class="px-2 py-1.5 bg-[#1d1d21] border-b border-[#2e2e32] space-y-1 text-[11px]"></div>
 
-    <!-- スマホ下部固定5ボタン -->
     <div class="grid grid-cols-5 gap-1 p-1 text-[10px] font-extrabold">
       <button onclick="openMobileToolsModal()" class="py-2 rounded-lg bg-[#262629] active:bg-sky-700 text-white flex flex-col items-center justify-center gap-0.5 cursor-pointer">
         <span class="text-sm leading-none">🛠️</span><span>ツール</span>
@@ -487,7 +480,6 @@
         <button onclick="closeModal('modal-presets')" class="text-slate-400 hover:text-white text-lg px-2 cursor-pointer">✕</button>
       </div>
 
-      <!-- マイ豆図登録＆他端末共有バー -->
       <div class="p-3 bg-[#141416] border-b border-[#2e2e32] space-y-2 shrink-0">
         <div class="flex flex-wrap items-center gap-1.5">
           <span class="font-extrabold text-amber-300">⭐ マイ豆図登録:</span>
@@ -504,7 +496,6 @@
         <div id="my-mamezu-list-box" class="flex gap-1.5 overflow-x-auto pb-0.5"></div>
       </div>
 
-      <!-- カテゴリ絞り込み＆検索バー -->
       <div class="px-3 py-2 bg-[#202024] border-b border-[#2e2e32] flex flex-wrap items-center justify-between gap-2 shrink-0">
         <div class="flex flex-wrap gap-1 font-bold">
           <button id="pcat-all" onclick="setPresetCategory('all')" class="pcat-btn px-2.5 py-1 rounded-lg bg-indigo-600 text-white cursor-pointer">すべて (100)</button>
@@ -516,7 +507,6 @@
         <input id="inp-preset-search" type="text" placeholder="🔍 キーワード検索（例：配筋・防水・足場）" oninput="renderPresetCardsGrid()" class="w-full sm:w-56 bg-[#141416] border border-[#3a3a3e] rounded-lg px-2.5 py-1 text-white outline-none focus:border-indigo-400" />
       </div>
 
-      <!-- 雛形カード一覧グリッド -->
       <div id="preset-cards-grid" class="p-3 overflow-y-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 flex-1"></div>
     </div>
   </div>
@@ -701,6 +691,32 @@
       a4_v:     { label: 'A4 縦',          w: 794,  h: 1122 },
       a3_h:     { label: 'A3 横',          w: 1440, h: 1018 },
       a3_v:     { label: 'A3 縦',          w: 1018, h: 1440 }
+    };
+
+    const TOOL_LABELS = {
+      select: '選択・移動・変形',
+      leader: '引き出し線',
+      pen: 'フリーペン',
+      line: '直線',
+      parallel: '平行線（複線）',
+      polyline: '連続折れ線・多角形',
+      arrow: '矢印線',
+      dimension: '寸法線（自動mm）',
+      angle_dim: '角度寸法（3点）',
+      radius_dim: '半径・直径寸法',
+      rect: '四角形',
+      roundrect: '角丸枠',
+      circle: '円・楕円',
+      cloud: 'もこもこ雲マーク',
+      hatch: 'ハッチング領域',
+      camera: '撮影方向（視野角）',
+      balloon: '自動連番バルーン',
+      breakline: '破断線（省略記号）',
+      slope: '勾配・水勾配記号',
+      level: 'レベル・基準高記号',
+      compass: '方位記号（N）',
+      text: 'テキスト文字',
+      table: '3×3 空白表'
     };
 
     const CIRCLED_NUMS = ['①','②','③','④','⑤','⑥','⑦','⑧','⑨','⑩','⑪','⑫','⑬','⑭','⑮','⑯','⑰','⑱','⑲','⑳'];
@@ -911,15 +927,9 @@
 
     function formatBalloonLabel(num, style = 'circled') {
       const n = Math.max(1, Number(num) || 1);
-      if (style === 'upper') {
-        return String.fromCharCode(65 + ((n - 1) % 26));
-      }
-      if (style === 'lower') {
-        return String.fromCharCode(97 + ((n - 1) % 26));
-      }
-      if (style === 'number') {
-        return String(n);
-      }
+      if (style === 'upper') return String.fromCharCode(65 + ((n - 1) % 26));
+      if (style === 'lower') return String.fromCharCode(97 + ((n - 1) % 26));
+      if (style === 'number') return String(n);
       return CIRCLED_NUMS[(n - 1) % CIRCLED_NUMS.length] || `(${n})`;
     }
 
@@ -985,8 +995,7 @@
         return;
       }
       state.redoStack.push(JSON.stringify(serializeObjects(state.objects)));
-      const prev = JSON.parse(state.undoStack.pop());
-      state.objects = prev;
+      state.objects = JSON.parse(state.undoStack.pop());
       state.selectedIndex = -1;
       state.selectedIndices = [];
       syncToolUi();
@@ -1000,8 +1009,7 @@
         return;
       }
       state.undoStack.push(JSON.stringify(serializeObjects(state.objects)));
-      const next = JSON.parse(state.redoStack.pop());
-      state.objects = next;
+      state.objects = JSON.parse(state.redoStack.pop());
       state.selectedIndex = -1;
       state.selectedIndices = [];
       syncToolUi();
@@ -1009,7 +1017,7 @@
       autoSaveCanvas();
     }
 
-    // ==================== 複数豆図シート管理 ＆ 自動保存 ====================
+    // ==================== 複数豆図シート管理 ＆ ズーム・用紙サイズ ====================
     function createSheetSnapshot(title = '豆図 1') {
       const canvas = document.getElementById('mamezu-canvas');
       return {
@@ -1066,6 +1074,52 @@
       renderCanvas();
     }
 
+    function switchMamezuSheet(nextIdx) {
+      if (!Array.isArray(state.sheets) || state.sheets.length === 0) return;
+      if (nextIdx < 0 || nextIdx >= state.sheets.length || nextIdx === state.currentSheetIndex) return;
+      saveCurrentSheetState();
+      loadSheetStateIntoCanvas(nextIdx);
+      autoSaveCanvas();
+    }
+
+    function addNewMamezuSheet(cloneCurrent = false) {
+      saveCurrentSheetState();
+      const nextNum = state.sheets.length + 1;
+      const cur = state.sheets[state.currentSheetIndex];
+      let newSnap;
+      if (cloneCurrent && cur) {
+        newSnap = JSON.parse(JSON.stringify(cur));
+        newSnap.id = 'sheet_' + Date.now() + '_' + Math.random().toString(36).slice(2, 5);
+        newSnap.title = `${cur.title || `豆図 ${state.currentSheetIndex + 1}`} (複製)`;
+      } else {
+        newSnap = createSheetSnapshot(`豆図 ${nextNum}`);
+        newSnap.objects = [];
+      }
+      state.sheets.push(newSnap);
+      loadSheetStateIntoCanvas(state.sheets.length - 1);
+      autoSaveCanvas();
+      showToast(cloneCurrent ? `📋 「${newSnap.title}」を複製しました` : `＋ 「${newSnap.title}」を追加しました`);
+    }
+
+    function renameCurrentMamezuSheet(newTitle) {
+      if (!state.sheets[state.currentSheetIndex]) return;
+      state.sheets[state.currentSheetIndex].title = String(newTitle || '').trim() || `豆図 ${state.currentSheetIndex + 1}`;
+      renderSheetSwitcherUi();
+      autoSaveCanvas();
+    }
+
+    function deleteCurrentMamezuSheet() {
+      if (state.sheets.length <= 1) {
+        showToast('最後の1枚は削除できません');
+        return;
+      }
+      state.sheets.splice(state.currentSheetIndex, 1);
+      const nextIdx = Math.min(state.currentSheetIndex, state.sheets.length - 1);
+      loadSheetStateIntoCanvas(nextIdx);
+      autoSaveCanvas();
+      showToast('🗑️ 豆図シートを削除しました');
+    }
+
     function renderSheetSwitcherUi() {
       if (!Array.isArray(state.sheets) || state.sheets.length === 0) {
         state.sheets = [createSheetSnapshot('豆図 1')];
@@ -1078,7 +1132,8 @@
       if (tabsEl) {
         tabsEl.innerHTML = state.sheets.map((s, idx) => {
           const active = idx === curIdx;
-          return `<button onclick="switchMamezuSheet(${idx})" ondblclick="document.getElementById('inp-current-sheet-title')?.focus()" class="px-2.5 py-0.5 rounded font-extrabold whitespace-nowrap cursor-pointer ${active ? 'bg-sky-600 text-white shadow' : 'bg-[#262629] hover:bg-[#343438] text-slate-300 border border-[#3a3a3e]'}">📐 ${escapeHtml(s.title || `豆図 ${idx + 1}`)}</button>`;
+          const label = escapeHtml(s.title || `豆図 ${idx + 1}`);
+          return `<button onclick="switchMamezuSheet(${idx})" ondblclick="focusSheetTitleInput()" title="クリックで切替 ／ ダブルクリックでタイトル編集" class="px-2.5 py-0.5 rounded font-extrabold whitespace-nowrap cursor-pointer transition-colors ${active ? 'bg-sky-600 text-white shadow ring-1 ring-sky-300' : 'bg-[#262629] hover:bg-[#343438] text-slate-300 border border-[#3a3a3e]'}">📐 ${label}</button>`;
         }).join('');
       }
 
@@ -1087,72 +1142,799 @@
         mobSel.innerHTML = state.sheets.map((s, idx) => `<option value="${idx}" ${idx === curIdx ? 'selected' : ''} class="bg-[#18181a]">📐 ${idx + 1}/${state.sheets.length}: ${escapeHtml(s.title || `豆図 ${idx + 1}`)}</option>`).join('');
       }
 
+      const curTitle = state.sheets[curIdx]?.title || `豆図 ${curIdx + 1}`;
       const titleInp = document.getElementById('inp-current-sheet-title');
-      if (titleInp && document.activeElement !== titleInp) {
-        titleInp.value = state.sheets[curIdx]?.title || `豆図 ${curIdx + 1}`;
-      }
+      if (titleInp && document.activeElement !== titleInp) titleInp.value = curTitle;
+
+      const mobTitleInp = document.getElementById('inp-mobile-sheet-title');
+      if (mobTitleInp && document.activeElement !== mobTitleInp) mobTitleInp.value = curTitle;
 
       const delBtn = document.getElementById('btn-del-sheet');
-      if (delBtn) {
-        delBtn.classList.toggle('hidden', state.sheets.length <= 1);
+      if (delBtn) delBtn.classList.toggle('hidden', state.sheets.length <= 1);
+    }
+
+    function focusSheetTitleInput() {
+      if (isMobileUiActive()) {
+        toggleMobileSheetRenameBox(true);
+        return;
+      }
+      const inp = document.getElementById('inp-current-sheet-title');
+      if (inp) {
+        inp.classList.remove('hidden');
+        inp.focus();
+        inp.select();
       }
     }
 
-    function addNewMamezuSheet(cloneCurrent = false) {
-      saveCurrentSheetState();
-      const nextNum = state.sheets.length + 1;
-      let newSnap;
-      if (cloneCurrent && state.sheets[state.currentSheetIndex]) {
-        const src = state.sheets[state.currentSheetIndex];
-        newSnap = JSON.parse(JSON.stringify(src));
-        newSnap.id = 'sheet_' + Date.now();
-        newSnap.title = `${src.title || `豆図 ${nextNum - 1}`} (複製)`;
+    function toggleMobileSheetRenameBox(forceOpen = null) {
+      const bar = document.getElementById('mobile-sheet-rename-bar');
+      if (!bar) return;
+      const shouldOpen = forceOpen !== null ? forceOpen : bar.classList.contains('hidden');
+      bar.classList.toggle('hidden', !shouldOpen);
+      if (shouldOpen) {
+        const inp = document.getElementById('inp-mobile-sheet-title');
+        if (inp) {
+          inp.value = state.sheets[state.currentSheetIndex]?.title || '';
+          inp.focus();
+          inp.select();
+        }
+      }
+    }
+
+    function changeCanvasSizePreset(presetKey) {
+      const spec = CANVAS_PRESETS[presetKey];
+      const canvas = document.getElementById('mamezu-canvas');
+      if (!spec || !canvas) return;
+      const oldW = canvas.width;
+      const oldH = canvas.height;
+      const dx = Math.round((spec.w - oldW) / 2);
+      const dy = Math.round((spec.h - oldH) / 2);
+      state.canvasPreset = presetKey;
+      canvas.width = spec.w;
+      canvas.height = spec.h;
+      state.objects.forEach(o => translateSingleObject(o, dx, dy));
+      applyCanvasZoomLayout();
+      renderCanvas();
+      autoSaveCanvas();
+      showToast(`📐 用紙サイズを「${spec.label}」に変更しました`);
+    }
+
+    function applyCanvasZoomLayout() {
+      const canvas = document.getElementById('mamezu-canvas');
+      const btn = document.getElementById('btn-zoom-reset');
+      if (!canvas) return;
+      if (state.zoomFitMode) {
+        canvas.style.width = '';
+        canvas.style.height = '';
+        canvas.classList.add('max-w-full', 'max-h-full', 'h-auto', 'w-auto');
+        if (btn) btn.textContent = '🔍 フィット';
       } else {
-        const canvas = document.getElementById('mamezu-canvas');
-        newSnap = {
-          id: 'sheet_' + Date.now(),
-          title: `豆図 ${nextNum}`,
-          canvasPreset: state.canvasPreset || 'standard',
-          w: canvas?.width || 960,
-          h: canvas?.height || 560,
-          bgType: state.bgType || 'grid',
-          bgTintColor: state.bgTintColor || '#fef9c3',
-          bgAlpha: typeof state.bgAlpha === 'number' ? state.bgAlpha : 35,
-          mmPerPx: Number(state.mmPerPx || 5.0),
-          objects: []
-        };
+        const z = Math.max(0.5, Math.min(2.5, Number(state.zoom) || 1.0));
+        state.zoom = z;
+        canvas.classList.remove('max-w-full', 'max-h-full', 'h-auto', 'w-auto');
+        canvas.style.width = `${Math.round(canvas.width * z)}px`;
+        canvas.style.height = `${Math.round(canvas.height * z)}px`;
+        if (btn) btn.textContent = `🔍 ${Math.round(z * 100)}%`;
       }
-      state.sheets.push(newSnap);
-      loadSheetStateIntoCanvas(state.sheets.length - 1);
-      autoSaveCanvas();
-      showToast(cloneCurrent ? `📋 「${newSnap.title}」を複製しました` : `📐 新しいシート「${newSnap.title}」を追加しました`);
     }
 
-    function switchMamezuSheet(idx) {
-      if (!Array.isArray(state.sheets) || idx < 0 || idx >= state.sheets.length) return;
-      if (idx === state.currentSheetIndex) return;
-      saveCurrentSheetState();
-      loadSheetStateIntoCanvas(idx);
+    function adjustCanvasZoom(delta) {
+      const base = state.zoomFitMode ? 1.0 : (Number(state.zoom) || 1.0);
+      state.zoomFitMode = false;
+      state.zoom = Math.max(0.5, Math.min(2.5, Math.round((base + delta) * 100) / 100));
+      applyCanvasZoomLayout();
+      if (isMobileUiActive()) renderMobileContextBar();
+    }
+
+    function resetCanvasZoom() {
+      state.zoomFitMode = true;
+      state.zoom = 1.0;
+      applyCanvasZoomLayout();
+      if (isMobileUiActive()) renderMobileContextBar();
+    }
+
+    function isMobileUiActive() {
+      if (state.mobileUiOverride !== null) return !!state.mobileUiOverride;
+      return window.innerWidth < 768;
+    }
+
+    function toggleMobileUiMode() {
+      state.mobileUiOverride = !isMobileUiActive();
+      applyResponsiveUiLayout();
+    }
+
+    function applyResponsiveUiLayout() {
+      const mob = isMobileUiActive();
+      document.getElementById('pc-control-bar')?.classList.toggle('hidden', mob);
+      document.getElementById('left-toolbox')?.classList.toggle('hidden', mob);
+      document.getElementById('right-dock-panel')?.classList.toggle('hidden', mob);
+      document.getElementById('pc-status-bar')?.classList.toggle('hidden', mob);
+
+      const pcTabsArea = document.getElementById('sheet-pc-tabs-area');
+      const mobDropdownArea = document.getElementById('sheet-mobile-dropdown-area');
+      const pcTitleInp = document.getElementById('inp-current-sheet-title');
+      if (pcTabsArea) {
+        pcTabsArea.classList.toggle('hidden', mob);
+        pcTabsArea.classList.toggle('flex', !mob);
+      }
+      if (mobDropdownArea) {
+        mobDropdownArea.classList.toggle('hidden', !mob);
+        mobDropdownArea.classList.toggle('flex', mob);
+      }
+      if (pcTitleInp) pcTitleInp.classList.toggle('hidden', mob);
+      if (!mob) document.getElementById('mobile-sheet-rename-bar')?.classList.add('hidden');
+
+      const mobGui = document.getElementById('mobile-bottom-gui');
+      if (mobGui) {
+        mobGui.classList.toggle('hidden', !mob);
+        mobGui.classList.toggle('flex', mob);
+      }
+      const btn = document.getElementById('btn-toggle-mobile-ui');
+      if (btn) btn.textContent = mob ? '💻 PC UI' : '📱 スマホUI';
+      if (mob) renderMobileContextBar();
+    }
+
+    // ==================== プルダウン初期化 ＆ ツール・書式変更 ====================
+    function populateStyleDropdowns() {
+      const defs = getStyleDefs();
+      const fillSel = (id, list) => {
+        const el = document.getElementById(id);
+        if (!el || !Array.isArray(list)) return;
+        el.innerHTML = list.map(it => `<option value="${escapeHtml(it.id)}" class="bg-[#18181a]">${escapeHtml(it.label)}</option>`).join('');
+      };
+      fillSel('sel-line-style', defs.lineStyles);
+      fillSel('sel-dash-pattern', defs.dashPatterns);
+      fillSel('sel-arrow-start', defs.arrowTypes);
+      fillSel('sel-arrow-end', defs.arrowTypes);
+      fillSel('sel-dim-ext-style', defs.dimExtStyles);
+      fillSel('sel-text-box-style', defs.textBoxStyles);
+      fillSel('sel-hatch-pattern', defs.hatchPatterns);
+
+      const endSel = document.getElementById('sel-arrow-end');
+      if (endSel) endSel.value = 'filled';
+    }
+
+    function syncToolUi() {
+      const selTool = document.getElementById('sel-active-tool');
+      if (selTool) selTool.value = state.tool;
+
+      document.querySelectorAll('.tool-btn').forEach(btn => {
+        const active = btn.dataset.tool === state.tool;
+        btn.classList.toggle('bg-sky-600', active);
+        btn.classList.toggle('border-sky-300', active);
+        btn.classList.toggle('text-white', active);
+        btn.classList.toggle('bg-[#262629]', !active);
+        btn.classList.toggle('border-[#3a3a3e]', !active);
+      });
+
+      const statusLbl = document.getElementById('lbl-status-tool');
+      if (statusLbl) statusLbl.textContent = TOOL_LABELS[state.tool] || state.tool;
+
+      const polyBtn = document.getElementById('btn-finish-polyline');
+      if (polyBtn) polyBtn.classList.toggle('hidden', !state.activePolyline);
+
+      const sel = state.objects[state.selectedIndex];
+      const selSet = getSelectedIndicesSet();
+      const hasGroup = Array.from(selSet).some(i => state.objects[i]?.groupId);
+
+      document.getElementById('btn-group-top')?.classList.toggle('hidden', selSet.size < 2);
+      document.getElementById('btn-ungroup-top')?.classList.toggle('hidden', !hasGroup);
+
+      document.getElementById('opt-parallel-box')?.classList.toggle('hidden', !(state.tool === 'parallel' || sel?.type === 'parallel'));
+      document.getElementById('opt-balloon-box')?.classList.toggle('hidden', !(state.tool === 'balloon' || sel?.type === 'balloon'));
+      document.getElementById('opt-dim-box')?.classList.toggle('hidden', !(state.tool === 'dimension' || sel?.type === 'dimension'));
+      document.getElementById('opt-angle-box')?.classList.toggle('hidden', !(state.tool === 'angle_dim' || sel?.type === 'angle_dim'));
+      document.getElementById('opt-radius-box')?.classList.toggle('hidden', !(state.tool === 'radius_dim' || sel?.type === 'radius_dim'));
+      document.getElementById('opt-textbox-box')?.classList.toggle('hidden', !(state.tool === 'text' || sel?.type === 'text'));
+      document.getElementById('opt-leader-box')?.classList.toggle('hidden', !(state.tool === 'leader' || sel?.type === 'leader'));
+
+      const isMedia = sel && ['image', 'pdf', 'dxf'].includes(sel.type);
+      document.getElementById('btn-start-crop')?.classList.toggle('hidden', !isMedia || state.cropMode);
+      document.getElementById('box-crop-confirm')?.classList.toggle('hidden', !state.cropMode);
+
+      const tblPanel = document.getElementById('table-edit-panel');
+      if (tblPanel) {
+        tblPanel.classList.toggle('hidden', !(sel && sel.type === 'table'));
+        if (sel && sel.type === 'table') {
+          const coordEl = document.getElementById('lbl-table-cell-coord');
+          const txtEl = document.getElementById('inp-table-cell-text');
+          if (coordEl) coordEl.textContent = `R${state.tableSelRow + 1}:C${state.tableSelCol + 1}`;
+          if (txtEl && document.activeElement !== txtEl) {
+            txtEl.value = sel.cells?.[state.tableSelRow]?.[state.tableSelCol]?.text || '';
+          }
+        }
+      }
+
+      const labelInp = document.getElementById('inp-label-text');
+      if (labelInp && document.activeElement !== labelInp && sel) {
+        if (typeof sel.text === 'string') labelInp.value = sel.text;
+      }
+
+      const opInp = document.getElementById('inp-obj-opacity');
+      const opLbl = document.getElementById('lbl-obj-opacity');
+      const curOp = sel ? (sel.opacity ?? 100) : 100;
+      if (opInp) opInp.value = curOp;
+      if (opLbl) opLbl.textContent = `${curOp}%`;
+
+      const scaleBtn = document.getElementById('btn-scale-calib');
+      if (scaleBtn) scaleBtn.textContent = `📏 1px=${Number(state.mmPerPx || 5).toFixed(1)}mm`;
+
+      document.querySelectorAll('.bg-type-btn').forEach(b => {
+        const active = b.id === `bg-btn-${state.bgType}`;
+        b.classList.toggle('bg-emerald-600', active);
+        b.classList.toggle('text-white', active);
+        b.classList.toggle('bg-[#2b2b30]', !active);
+        b.classList.toggle('text-slate-300', !active);
+      });
+
+      if (isMobileUiActive()) renderMobileContextBar();
+    }
+
+    function setTool(toolId) {
+      if (state.activePolyline && toolId !== 'polyline') {
+        finishActivePolyline(false);
+      }
+      state.tool = toolId;
+      state.angleStepPts = [];
+      state.activeSnapPt = null;
+      syncToolUi();
+      renderCanvas();
+    }
+
+    function setColor(hex) {
+      state.color = hex;
+      const pk = document.getElementById('inp-stroke-color');
+      if (pk) pk.value = hex;
+      const selSet = getSelectedIndicesSet();
+      if (selSet.size > 0) {
+        pushUndoSnapshot();
+        selSet.forEach(i => { if (state.objects[i]) state.objects[i].color = hex; });
+        renderCanvas();
+        autoSaveCanvas();
+      }
+    }
+
+    function setStrokeWidth(w) {
+      state.strokeWidth = w;
+      const selSet = getSelectedIndicesSet();
+      if (selSet.size > 0) {
+        pushUndoSnapshot();
+        selSet.forEach(i => { if (state.objects[i]) state.objects[i].strokeWidth = w; });
+        renderCanvas();
+        autoSaveCanvas();
+      }
+    }
+
+    function setLineStyle(ls) {
+      state.lineStyle = ls;
+      const selSet = getSelectedIndicesSet();
+      if (selSet.size > 0) {
+        pushUndoSnapshot();
+        selSet.forEach(i => { if (state.objects[i]) state.objects[i].lineStyle = ls; });
+        renderCanvas();
+        autoSaveCanvas();
+      }
+    }
+
+    function setDashPattern(dp) {
+      state.dashPattern = dp;
+      const selSet = getSelectedIndicesSet();
+      if (selSet.size > 0) {
+        pushUndoSnapshot();
+        selSet.forEach(i => { if (state.objects[i]) state.objects[i].dashPattern = dp; });
+        renderCanvas();
+        autoSaveCanvas();
+      }
+    }
+
+    function setArrowStart(st) {
+      state.arrowStart = st;
+      const sel = state.objects[state.selectedIndex];
+      if (sel) {
+        pushUndoSnapshot();
+        sel.arrowStart = st;
+        renderCanvas();
+        autoSaveCanvas();
+      }
+    }
+
+    function setArrowEnd(st) {
+      state.arrowEnd = st;
+      const sel = state.objects[state.selectedIndex];
+      if (sel) {
+        pushUndoSnapshot();
+        sel.arrowEnd = st;
+        renderCanvas();
+        autoSaveCanvas();
+      }
+    }
+
+    function swapSelectedArrowEnds() {
+      const sel = state.objects[state.selectedIndex];
+      if (!sel) return;
+      pushUndoSnapshot();
+      const tmp = sel.arrowStart || 'none';
+      sel.arrowStart = sel.arrowEnd || 'none';
+      sel.arrowEnd = tmp;
+      if (typeof sel.x1 === 'number' && typeof sel.x2 === 'number' && sel.type !== 'leader') {
+        [sel.x1, sel.x2] = [sel.x2, sel.x1];
+        [sel.y1, sel.y2] = [sel.y2, sel.y1];
+      }
+      renderCanvas();
       autoSaveCanvas();
     }
 
-    function renameCurrentMamezuSheet(newTitle) {
-      if (!Array.isArray(state.sheets) || !state.sheets[state.currentSheetIndex]) return;
-      state.sheets[state.currentSheetIndex].title = (newTitle || '').trim() || `豆図 ${state.currentSheetIndex + 1}`;
-      renderSheetSwitcherUi();
+    function setParallelGap(gap) {
+      state.parallelGap = Math.max(4, Math.min(120, gap || 22));
+      const sel = state.objects[state.selectedIndex];
+      if (sel && sel.type === 'parallel') {
+        sel.gap = state.parallelGap;
+        renderCanvas();
+        autoSaveCanvas();
+      }
+    }
+
+    function setBalloonStyle(st) {
+      state.balloonStyle = st;
+      const sel = state.objects[state.selectedIndex];
+      if (sel && sel.type === 'balloon') {
+        pushUndoSnapshot();
+        sel.balloonStyle = st;
+        sel.text = formatBalloonLabel(sel.num || 1, st);
+        renderCanvas();
+        autoSaveCanvas();
+      }
+    }
+
+    function resetBalloonCounter() {
+      state.balloonNext = 1;
+      showToast('🔢 連番バルーンを先頭（1 / ① / A）にリセットしました');
+    }
+
+    function toggleSelectedBalloonCase() {
+      const sel = state.objects[state.selectedIndex];
+      if (!sel || sel.type !== 'balloon') return;
+      pushUndoSnapshot();
+      sel.balloonStyle = sel.balloonStyle === 'upper' ? 'lower' : 'upper';
+      sel.text = formatBalloonLabel(sel.num || 1, sel.balloonStyle);
+      renderCanvas();
       autoSaveCanvas();
     }
 
-    function deleteCurrentMamezuSheet() {
-      if (!Array.isArray(state.sheets) || state.sheets.length <= 1) return;
-      const removedTitle = state.sheets[state.currentSheetIndex]?.title || '豆図';
-      state.sheets.splice(state.currentSheetIndex, 1);
-      const nextIdx = Math.max(0, Math.min(state.currentSheetIndex, state.sheets.length - 1));
-      loadSheetStateIntoCanvas(nextIdx);
-      autoSaveCanvas();
-      showToast(`🗑️ 「${removedTitle}」を削除しました`);
+    function setDimTextPos(pos) {
+      state.dimTextPos = pos;
+      const sel = state.objects[state.selectedIndex];
+      if (sel && sel.type === 'dimension') {
+        pushUndoSnapshot();
+        sel.textPos = pos;
+        renderCanvas();
+        autoSaveCanvas();
+      }
     }
 
+    function setDimExtStyle(st) {
+      state.dimExtStyle = st;
+      const sel = state.objects[state.selectedIndex];
+      if (sel && sel.type === 'dimension') {
+        pushUndoSnapshot();
+        sel.dimExtStyle = st;
+        renderCanvas();
+        autoSaveCanvas();
+      }
+    }
+
+    function adjustSelectedDimOffset(delta) {
+      const sel = state.objects[state.selectedIndex];
+      if (!sel || sel.type !== 'dimension') return;
+      pushUndoSnapshot();
+      sel.dimOffset = (Number(sel.dimOffset) || 0) + delta;
+      renderCanvas();
+      autoSaveCanvas();
+    }
+
+    function openScaleCalibModal() {
+      const sel = state.objects[state.selectedIndex];
+      if (sel && sel.type === 'dimension') {
+        const px = Math.max(1, Math.round(Math.hypot(sel.x2 - sel.x1, sel.y2 - sel.y1)));
+        document.getElementById('inp-calib-px').value = px;
+        document.getElementById('inp-calib-mm').value = Math.round(px * state.mmPerPx);
+      }
+      openModal('modal-scale-calib');
+    }
+
+    function resetScaleCalibration() {
+      state.mmPerPx = 5.0;
+      closeModal('modal-scale-calib');
+      syncToolUi();
+      renderCanvas();
+      autoSaveCanvas();
+      showToast('📏 標準縮尺（1px = 5.0mm）に戻しました');
+    }
+
+    function applyScaleCalibration() {
+      const px = Math.max(1, Number(document.getElementById('inp-calib-px')?.value) || 200);
+      const mm = Math.max(1, Number(document.getElementById('inp-calib-mm')?.value) || 1000);
+      state.mmPerPx = mm / px;
+      closeModal('modal-scale-calib');
+      syncToolUi();
+      renderCanvas();
+      autoSaveCanvas();
+      showToast(`📏 縮尺を更新しました（1px = ${state.mmPerPx.toFixed(2)}mm）`);
+    }
+
+    function toggleSelectedAngleReflex() {
+      const sel = state.objects[state.selectedIndex];
+      if (!sel || sel.type !== 'angle_dim') return;
+      pushUndoSnapshot();
+      sel.useReflex = !sel.useReflex;
+      renderCanvas();
+      autoSaveCanvas();
+    }
+
+    function adjustSelectedAngleArcR(delta) {
+      const sel = state.objects[state.selectedIndex];
+      if (!sel || sel.type !== 'angle_dim') return;
+      pushUndoSnapshot();
+      sel.arcR = Math.max(24, Math.min(260, (Number(sel.arcR) || 68) + delta));
+      renderCanvas();
+      autoSaveCanvas();
+    }
+
+    function setRadiusDimKind(kind) {
+      state.radiusDimKind = kind;
+      const sel = state.objects[state.selectedIndex];
+      if (sel && sel.type === 'radius_dim') {
+        pushUndoSnapshot();
+        sel.dimKind = kind;
+        renderCanvas();
+        autoSaveCanvas();
+      }
+    }
+
+    function setTextBoxStyle(st) {
+      state.textBoxStyle = st;
+      const sel = state.objects[state.selectedIndex];
+      if (sel && sel.type === 'text') {
+        pushUndoSnapshot();
+        sel.textBoxStyle = st;
+        renderCanvas();
+        autoSaveCanvas();
+      }
+    }
+
+    function adjustSelectedTextFontSize(delta) {
+      const sel = state.objects[state.selectedIndex];
+      if (sel && sel.type === 'text') {
+        pushUndoSnapshot();
+        sel.fontSize = Math.max(12, Math.min(64, (Number(sel.fontSize) || 24) + delta));
+        const lbl = document.getElementById('lbl-text-font-size');
+        if (lbl) lbl.textContent = `${sel.fontSize}px`;
+        renderCanvas();
+        autoSaveCanvas();
+      } else {
+        state.textFontSize = Math.max(12, Math.min(64, (state.textFontSize || 24) + delta));
+      }
+    }
+
+    function setLeaderLineColor(col) {
+      const sel = state.objects[state.selectedIndex];
+      if (sel && sel.type === 'leader') {
+        sel.color = col;
+        renderCanvas();
+        autoSaveCanvas();
+      }
+    }
+
+    function setLeaderTextColor(col) {
+      state.leaderTextColor = col;
+      const sel = state.objects[state.selectedIndex];
+      if (sel && sel.type === 'leader') {
+        sel.textColor = col;
+        renderCanvas();
+        autoSaveCanvas();
+      }
+    }
+
+    function resetLeaderTextColor() {
+      state.leaderTextColor = '';
+      const sel = state.objects[state.selectedIndex];
+      if (sel && sel.type === 'leader') {
+        sel.textColor = '';
+        renderCanvas();
+        autoSaveCanvas();
+      }
+    }
+
+    function adjustSelectedLeaderFontSize(delta) {
+      const sel = state.objects[state.selectedIndex];
+      if (sel && sel.type === 'leader') {
+        pushUndoSnapshot();
+        sel.fontSize = Math.max(14, Math.min(36, (Number(sel.fontSize) || 21) + delta));
+        const lbl = document.getElementById('lbl-leader-font-size');
+        if (lbl) lbl.textContent = `${sel.fontSize}px`;
+        renderCanvas();
+        autoSaveCanvas();
+      }
+    }
+
+    function updateSelectedObjectText(txt) {
+      const sel = state.objects[state.selectedIndex];
+      if (!sel) return;
+      sel.text = txt;
+      renderCanvas();
+      autoSaveCanvas();
+    }
+
+    function setHatchPattern(pat) {
+      state.hatchPattern = pat;
+      const sel = state.objects[state.selectedIndex];
+      if (sel && sel.type === 'hatch') {
+        pushUndoSnapshot();
+        sel.hatchPattern = pat;
+        renderCanvas();
+        autoSaveCanvas();
+      }
+    }
+
+    function setBgType(bg) {
+      state.bgType = bg;
+      syncToolUi();
+      renderCanvas();
+      autoSaveCanvas();
+    }
+
+    function setBgTintColor(col) {
+      state.bgTintColor = col;
+      state.bgType = 'tint';
+      syncToolUi();
+      renderCanvas();
+      autoSaveCanvas();
+    }
+
+    function setBgAlpha(a) {
+      state.bgAlpha = a;
+      state.bgType = 'tint';
+      const lbl = document.getElementById('lbl-bg-alpha');
+      if (lbl) lbl.textContent = `${a}%`;
+      syncToolUi();
+      renderCanvas();
+      autoSaveCanvas();
+    }
+
+    function toggleFillTint() {
+      state.fillTint = !state.fillTint;
+      const btn = document.getElementById('btn-fill-tint');
+      if (btn) btn.textContent = state.fillTint ? '🎨 塗ON' : '🎨 塗OFF';
+      const sel = state.objects[state.selectedIndex];
+      if (sel) {
+        pushUndoSnapshot();
+        sel.fillTint = state.fillTint;
+        renderCanvas();
+        autoSaveCanvas();
+      }
+    }
+
+    let pendingClearArmed = false;
+    function clearAllCanvasWithConfirm() {
+      if (!pendingClearArmed) {
+        pendingClearArmed = true;
+        const btn = document.getElementById('btn-clear-all');
+        if (btn) btn.textContent = '⚠️確定';
+        showToast('⚠️ もう一度「全消」を押すとキャンバスをクリアします');
+        setTimeout(() => {
+          pendingClearArmed = false;
+          const b = document.getElementById('btn-clear-all');
+          if (b) b.textContent = '全消';
+        }, 3000);
+        return;
+      }
+      pendingClearArmed = false;
+      const btn = document.getElementById('btn-clear-all');
+      if (btn) btn.textContent = '全消';
+      pushUndoSnapshot();
+      state.objects = [];
+      state.selectedIndex = -1;
+      state.selectedIndices = [];
+      syncToolUi();
+      renderCanvas();
+      autoSaveCanvas();
+    }
+
+    function toggleCadSnap() {
+      state.cadSnap = !state.cadSnap;
+      const btn = document.getElementById('btn-cad-snap');
+      if (btn) {
+        btn.textContent = state.cadSnap ? '🧲 スナップ: ON' : '🧲 スナップ: OFF';
+        btn.className = state.cadSnap ? 'px-2 py-0.5 font-bold text-emerald-300 cursor-pointer' : 'px-2 py-0.5 font-bold text-slate-400 cursor-pointer';
+      }
+      if (isMobileUiActive()) renderMobileContextBar();
+    }
+
+    function openSnapSettingsModal() {
+      openModal('modal-snap-settings');
+    }
+
+    function toggleMultiSelectMode() {
+      state.multiSelectMode = !state.multiSelectMode;
+      const btn = document.getElementById('btn-multi-select');
+      if (btn) {
+        btn.classList.toggle('bg-amber-600', state.multiSelectMode);
+        btn.classList.toggle('text-white', state.multiSelectMode);
+        btn.classList.toggle('bg-[#262629]', !state.multiSelectMode);
+        btn.classList.toggle('text-slate-300', !state.multiSelectMode);
+      }
+    }
+
+    function setObjectOpacity(val) {
+      const lbl = document.getElementById('lbl-obj-opacity');
+      if (lbl) lbl.textContent = `${val}%`;
+      const selSet = getSelectedIndicesSet();
+      if (selSet.size > 0) {
+        selSet.forEach(i => { if (state.objects[i]) state.objects[i].opacity = val; });
+        renderCanvas();
+        autoSaveCanvas();
+      }
+    }
+
+    function duplicateSelected() {
+      const selSet = getSelectedIndicesSet();
+      if (selSet.size === 0) return;
+      pushUndoSnapshot();
+      const newGid = selSet.size > 1 ? ('grp_' + Date.now()) : null;
+      const newIndices = [];
+      Array.from(selSet).sort((a, b) => a - b).forEach(idx => {
+        const copy = JSON.parse(JSON.stringify(state.objects[idx]));
+        delete copy._img;
+        if (newGid) copy.groupId = newGid;
+        else delete copy.groupId;
+        translateSingleObject(copy, 24, 24);
+        state.objects.push(copy);
+        newIndices.push(state.objects.length - 1);
+      });
+      state.selectedIndices = newIndices;
+      state.selectedIndex = newIndices[newIndices.length - 1] ?? -1;
+      syncToolUi();
+      renderCanvas();
+      autoSaveCanvas();
+      showToast('📋 選択要素を複製しました');
+    }
+
+    function groupSelectedObjects() {
+      const selSet = getSelectedIndicesSet();
+      if (selSet.size < 2) return;
+      pushUndoSnapshot();
+      const gid = 'grp_' + Date.now();
+      selSet.forEach(i => { if (state.objects[i]) state.objects[i].groupId = gid; });
+      syncToolUi();
+      renderCanvas();
+      autoSaveCanvas();
+      showToast(`🔗 ${selSet.size}個の図形をグループ化しました`);
+    }
+
+    function ungroupSelectedObjects() {
+      const selSet = getSelectedIndicesSet();
+      if (selSet.size === 0) return;
+      pushUndoSnapshot();
+      selSet.forEach(i => { if (state.objects[i]) delete state.objects[i].groupId; });
+      syncToolUi();
+      renderCanvas();
+      autoSaveCanvas();
+      showToast('🔓 グループ化を解除しました');
+    }
+
+    function bringSelectedToFront() {
+      const idx = state.selectedIndex;
+      if (idx < 0 || idx >= state.objects.length - 1) return;
+      pushUndoSnapshot();
+      const [item] = state.objects.splice(idx, 1);
+      state.objects.push(item);
+      selectSingleIndex(state.objects.length - 1);
+      renderCanvas();
+      autoSaveCanvas();
+    }
+
+    function sendSelectedToBack() {
+      const idx = state.selectedIndex;
+      if (idx <= 0 || idx >= state.objects.length) return;
+      pushUndoSnapshot();
+      const [item] = state.objects.splice(idx, 1);
+      state.objects.unshift(item);
+      selectSingleIndex(0);
+      renderCanvas();
+      autoSaveCanvas();
+    }
+
+    function deleteSelected() {
+      const selSet = getSelectedIndicesSet();
+      if (selSet.size === 0) return;
+      pushUndoSnapshot();
+      state.objects = state.objects.filter((_, i) => !selSet.has(i));
+      state.selectedIndex = -1;
+      state.selectedIndices = [];
+      syncToolUi();
+      renderCanvas();
+      autoSaveCanvas();
+    }
+
+    // ==================== 3×3 表操作ヘルパー ====================
+    function createDefaultTableObject(x, y) {
+      return {
+        type: 'table',
+        x,
+        y,
+        colWidths: [104, 104, 104],
+        rowHeights: [38, 38, 38],
+        fontSize: 18,
+        borderColor: '#0f172a',
+        cells: Array.from({ length: 3 }, () =>
+          Array.from({ length: 3 }, () => ({ text: '', bg: '#ffffff', color: '#0f172a', bold: false, diag: 'none' }))
+        ),
+        opacity: 100
+      };
+    }
+
+    function updateSelectedTableCellText(txt) {
+      const sel = state.objects[state.selectedIndex];
+      if (!sel || sel.type !== 'table') return;
+      const cell = sel.cells?.[state.tableSelRow]?.[state.tableSelCol];
+      if (cell) cell.text = txt;
+      renderCanvas();
+      autoSaveCanvas();
+    }
+
+    function modifySelectedTableGrid(op) {
+      const sel = state.objects[state.selectedIndex];
+      if (!sel || sel.type !== 'table') return;
+      pushUndoSnapshot();
+      const cols = sel.colWidths.length;
+      if (op === 'addRow') {
+        sel.rowHeights.push(38);
+        sel.cells.push(Array.from({ length: cols }, () => ({ text: '', bg: '#ffffff', color: '#0f172a', bold: false, diag: 'none' })));
+      } else if (op === 'delRow' && sel.rowHeights.length > 1) {
+        sel.rowHeights.pop();
+        sel.cells.pop();
+        state.tableSelRow = Math.min(state.tableSelRow, sel.rowHeights.length - 1);
+      } else if (op === 'addCol') {
+        sel.colWidths.push(104);
+        sel.cells.forEach(r => r.push({ text: '', bg: '#ffffff', color: '#0f172a', bold: false, diag: 'none' }));
+      } else if (op === 'delCol' && sel.colWidths.length > 1) {
+        sel.colWidths.pop();
+        sel.cells.forEach(r => r.pop());
+        state.tableSelCol = Math.min(state.tableSelCol, sel.colWidths.length - 1);
+      }
+      syncToolUi();
+      renderCanvas();
+      autoSaveCanvas();
+    }
+
+    function setSelectedTableCellBg(col) {
+      const sel = state.objects[state.selectedIndex];
+      const cell = sel?.cells?.[state.tableSelRow]?.[state.tableSelCol];
+      if (!cell) return;
+      cell.bg = col;
+      renderCanvas();
+      autoSaveCanvas();
+    }
+
+    function toggleSelectedTableCellBold() {
+      const sel = state.objects[state.selectedIndex];
+      const cell = sel?.cells?.[state.tableSelRow]?.[state.tableSelCol];
+      if (!cell) return;
+      cell.bold = !cell.bold;
+      renderCanvas();
+      autoSaveCanvas();
+    }
+
+    function setSelectedTableCellDiag(diag) {
+      const sel = state.objects[state.selectedIndex];
+      const cell = sel?.cells?.[state.tableSelRow]?.[state.tableSelCol];
+      if (!cell) return;
+      cell.diag = diag;
+      renderCanvas();
+      autoSaveCanvas();
+    }
+
+    // ==================== 自動保存 ＆ 復元 ====================
     function autoSaveCanvas() {
       try {
         saveCurrentSheetState();
@@ -1170,1052 +1952,135 @@
           const parsed = JSON.parse(raw);
           if (parsed && Array.isArray(parsed.sheets) && parsed.sheets.length > 0) {
             state.sheets = parsed.sheets;
-            const idx = Math.min(Math.max(0, Number(parsed.currentSheetIndex) || 0), state.sheets.length - 1);
-            loadSheetStateIntoCanvas(idx);
+            loadSheetStateIntoCanvas(Math.min(parsed.currentSheetIndex || 0, parsed.sheets.length - 1));
             return;
           }
           if (parsed && Array.isArray(parsed.objects)) {
-            state.sheets = [{
-              id: 'sheet_init',
-              title: '豆図 1',
-              canvasPreset: parsed.canvasPreset || 'standard',
-              w: parsed.w || 960,
-              h: parsed.h || 560,
-              bgType: parsed.bgType || 'grid',
-              bgTintColor: parsed.bgTintColor || '#fef9c3',
-              bgAlpha: typeof parsed.bgAlpha === 'number' ? parsed.bgAlpha : 35,
-              mmPerPx: Number(parsed.mmPerPx || 5.0),
-              objects: parsed.objects
-            }];
+            const snap = createSheetSnapshot('豆図 1');
+            snap.w = parsed.w || 960;
+            snap.h = parsed.h || 560;
+            snap.bgType = parsed.bgType || 'grid';
+            snap.objects = parsed.objects;
+            state.sheets = [snap];
             loadSheetStateIntoCanvas(0);
             return;
           }
         }
       } catch (_) {}
       state.sheets = [createSheetSnapshot('豆図 1')];
-      state.currentSheetIndex = 0;
-      const sizeSel = document.getElementById('sel-canvas-size');
-      if (sizeSel) sizeSel.value = state.canvasPreset;
-      applyCanvasZoomLayout();
-      renderSheetSwitcherUi();
-      syncToolUi();
-      renderCanvas();
+      loadSheetStateIntoCanvas(0);
     }
 
-    // ==================== ズーム・用紙サイズ・縮尺・UI同期 ====================
-    function applyCanvasZoomLayout() {
-      const canvas = document.getElementById('mamezu-canvas');
-      const wrap = document.getElementById('canvas-zoom-wrap');
-      const viewport = document.getElementById('canvas-viewport');
-      const btn = document.getElementById('btn-zoom-reset');
-      if (!canvas) return;
-      if (state.zoomFitMode) {
-        canvas.style.width = '';
-        canvas.style.height = '';
-        canvas.classList.add('max-w-full', 'max-h-full', 'h-auto', 'w-auto');
-        if (wrap) {
-          wrap.style.width = '';
-          wrap.style.height = '';
-        }
-        if (viewport) {
-          viewport.classList.add('items-center', 'justify-center');
-        }
-        if (btn) btn.textContent = '🔍 フィット';
-      } else {
-        const z = Math.max(0.5, Math.min(2.5, Number(state.zoom) || 1.0));
-        state.zoom = z;
-        const scaledW = Math.round(canvas.width * z);
-        const scaledH = Math.round(canvas.height * z);
-        canvas.classList.remove('max-w-full', 'max-h-full', 'h-auto', 'w-auto');
-        canvas.style.width = `${scaledW}px`;
-        canvas.style.height = `${scaledH}px`;
-        if (wrap) {
-          wrap.style.width = `${scaledW}px`;
-          wrap.style.height = `${scaledH}px`;
-        }
-        if (viewport) {
-          viewport.classList.remove('items-center', 'justify-center');
-        }
-        if (btn) btn.textContent = `🔍 ${Math.round(z * 100)}%`;
+    // ==================== CAD幾何スナップ・交点・垂線・角度スナップ ====================
+    function computeSegmentIntersection(x1, y1, x2, y2, x3, y3, x4, y4) {
+      const d = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
+      if (Math.abs(d) < 0.001) return null;
+      const t = ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) / d;
+      const u = -((x1 - x2) * (y1 - y3) - (y1 - y2) * (x1 - x3)) / d;
+      if (t >= 0 && t <= 1 && u >= 0 && u <= 1) {
+        return { x: Math.round(x1 + t * (x2 - x1)), y: Math.round(y1 + t * (y2 - y1)) };
       }
+      return null;
     }
 
-    function adjustCanvasZoom(delta) {
-      const cur = state.zoomFitMode ? 1.0 : (Number(state.zoom) || 1.0);
-      state.zoomFitMode = false;
-      state.zoom = Math.max(0.5, Math.min(2.5, Math.round((cur + delta) * 100) / 100));
-      applyCanvasZoomLayout();
-      if (isMobileUiActive()) renderMobileContextBar();
-    }
-
-    function resetCanvasZoom() {
-      state.zoomFitMode = true;
-      state.zoom = 1.0;
-      applyCanvasZoomLayout();
-      if (isMobileUiActive()) renderMobileContextBar();
-      showToast('🔍 画面フィット表示に戻しました');
-    }
-
-    function changeCanvasSizePreset(presetKey) {
-      const p = CANVAS_PRESETS[presetKey];
-      const canvas = document.getElementById('mamezu-canvas');
-      if (!p || !canvas) return;
-      const dx = Math.round((p.w - canvas.width) / 2);
-      const dy = Math.round((p.h - canvas.height) / 2);
-      canvas.width = p.w;
-      canvas.height = p.h;
-      state.canvasPreset = presetKey;
-      state.objects.forEach(o => translateSingleObject(o, dx, dy));
-      applyCanvasZoomLayout();
-      renderCanvas();
-      autoSaveCanvas();
-      showToast(`キャンバスを「${p.label} (${p.w}×${p.h})」に変更しました`);
-    }
-
-    function openScaleCalibModal() {
-      const sel = state.objects[state.selectedIndex];
-      const pxInp = document.getElementById('inp-calib-px');
-      const mmInp = document.getElementById('inp-calib-mm');
-      const infoEl = document.getElementById('scale-calib-info');
-      let pxLen = 200;
-      if (sel && sel.type === 'dimension') {
-        pxLen = Math.max(1, Math.round(Math.hypot(sel.x2 - sel.x1, sel.y2 - sel.y1) * 10) / 10);
-        if (infoEl) infoEl.textContent = `選択中の寸法線（画面長 ${pxLen}px）に対応する実寸（mm）を入力してください。`;
-      } else if (infoEl) {
-        infoEl.textContent = `現在の縮尺は 1px = ${Number(state.mmPerPx || 5.0).toFixed(2)}mm です。基準線の画面長(px)と実寸(mm)を入力してください。`;
-      }
-      if (pxInp) pxInp.value = String(pxLen);
-      if (mmInp) mmInp.value = String(Math.round(pxLen * (state.mmPerPx || 5.0)));
-      openModal('modal-scale-calib');
-    }
-
-    function applyScaleCalibration() {
-      const px = parseFloat(document.getElementById('inp-calib-px')?.value || '0');
-      const mm = parseFloat(document.getElementById('inp-calib-mm')?.value || '0');
-      if (!(px > 0) || !(mm > 0)) {
-        showToast('⚠️ 1以上の正の数値を入力してください');
-        return;
-      }
-      state.mmPerPx = mm / px;
-      closeModal('modal-scale-calib');
-      syncToolUi();
-      renderCanvas();
-      autoSaveCanvas();
-      showToast(`📏 図面縮尺を 1px = ${state.mmPerPx.toFixed(2)}mm に設定しました`);
-    }
-
-    function resetScaleCalibration() {
-      state.mmPerPx = 5.0;
-      closeModal('modal-scale-calib');
-      syncToolUi();
-      renderCanvas();
-      autoSaveCanvas();
-      showToast('📏 標準縮尺（1px = 5.0mm）に戻しました');
-    }
-
-    function isMobileUiActive() {
-      if (state.mobileUiOverride !== null) return state.mobileUiOverride;
-      return window.innerWidth < 768;
-    }
-
-    function toggleMobileUiMode() {
-      state.mobileUiOverride = !isMobileUiActive();
-      applyResponsiveUiLayout();
-    }
-
-    function applyResponsiveUiLayout() {
-      const mob = isMobileUiActive();
-      document.getElementById('pc-control-bar')?.classList.toggle('hidden', mob);
-      document.getElementById('left-toolbox')?.classList.toggle('hidden', mob);
-      document.getElementById('right-dock-panel')?.classList.toggle('hidden', mob);
-      document.getElementById('pc-status-bar')?.classList.toggle('hidden', mob);
-      const mobGui = document.getElementById('mobile-bottom-gui');
-      if (mobGui) {
-        mobGui.classList.toggle('hidden', !mob);
-        mobGui.classList.toggle('flex', mob);
-      }
-      const btn = document.getElementById('btn-toggle-mobile-ui');
-      if (btn) btn.textContent = mob ? '💻 PC UI' : '📱 スマホUI';
-      if (mob) renderMobileContextBar();
-    }
-
-    function populateStyleDropdowns() {
-      const defs = getStyleDefs();
-      const fillSel = (id, list, curVal) => {
-        const el = document.getElementById(id);
-        if (!el || !Array.isArray(list)) return;
-        el.innerHTML = list.map(item => `<option value="${escapeHtml(item.id)}" ${item.id === curVal ? 'selected' : ''} class="bg-[#18181a]">${escapeHtml(item.label)}</option>`).join('');
-      };
-      fillSel('sel-line-style', defs.lineStyles, state.lineStyle);
-      fillSel('sel-dash-pattern', defs.dashPatterns, state.dashPattern);
-      fillSel('sel-arrow-start', defs.arrowTypes, state.arrowStart);
-      fillSel('sel-arrow-end', defs.arrowTypes, state.arrowEnd);
-      fillSel('sel-dim-ext-style', defs.dimExtStyles, state.dimExtStyle);
-      fillSel('sel-text-box-style', defs.textBoxStyles, state.textBoxStyle);
-      fillSel('sel-hatch-pattern', defs.hatchPatterns, state.hatchPattern);
-    }
-
-    function setTool(toolId) {
-      if (state.activePolyline) finishActivePolyline(false);
-      state.tool = toolId;
-      state.angleStepPts = [];
-      state.activeSnapPt = null;
-      syncToolUi();
-      renderCanvas();
-    }
-
-    function syncToolUi() {
-      const sel = state.objects[state.selectedIndex];
-      const selSet = getSelectedIndicesSet();
-      const toolSel = document.getElementById('sel-active-tool');
-      if (toolSel) toolSel.value = state.tool;
-
-      document.querySelectorAll('.tool-btn').forEach(b => {
-        b.classList.toggle('tool-btn-active', b.dataset.tool === state.tool);
-      });
-
-      const statusLbl = document.getElementById('lbl-status-tool');
-      if (statusLbl && toolSel) {
-        const opt = toolSel.options[toolSel.selectedIndex];
-        statusLbl.textContent = opt ? opt.text.replace(/^[^\s]+\s/, '') : state.tool;
-      }
-
-      const scaleBtn = document.getElementById('btn-scale-calib');
-      if (scaleBtn) {
-        scaleBtn.textContent = `📏 1px=${Number(state.mmPerPx || 5.0).toFixed(1)}mm`;
-      }
-
-      const fillBtn = document.getElementById('btn-fill-tint');
-      if (fillBtn) {
-        fillBtn.textContent = state.fillTint ? '🎨 塗ON' : '🎨 塗OFF';
-        fillBtn.classList.toggle('bg-amber-700', state.fillTint);
-        fillBtn.classList.toggle('text-white', state.fillTint);
-      }
-
-      const grpBtn = document.getElementById('btn-group-top');
-      const ungrpBtn = document.getElementById('btn-ungroup-top');
-      if (grpBtn) grpBtn.classList.toggle('hidden', selSet.size < 2);
-      const hasGroup = Array.from(selSet).some(i => state.objects[i]?.groupId);
-      if (ungrpBtn) ungrpBtn.classList.toggle('hidden', !hasGroup);
-
-      const polyBtn = document.getElementById('btn-finish-polyline');
-      if (polyBtn) polyBtn.classList.toggle('hidden', !(state.tool === 'polyline' && state.activePolyline && state.activePolyline.points.length >= 2));
-
-      // 条件付きオプションバー表示切替
-      const activeKind = sel ? sel.type : state.tool;
-      document.getElementById('opt-parallel-box')?.classList.toggle('hidden', activeKind !== 'parallel');
-      document.getElementById('opt-balloon-box')?.classList.toggle('hidden', activeKind !== 'balloon');
-      document.getElementById('opt-dim-box')?.classList.toggle('hidden', activeKind !== 'dimension');
-      document.getElementById('opt-angle-box')?.classList.toggle('hidden', activeKind !== 'angle_dim');
-      document.getElementById('opt-radius-box')?.classList.toggle('hidden', activeKind !== 'radius_dim');
-      document.getElementById('opt-textbox-box')?.classList.toggle('hidden', activeKind !== 'text');
-      document.getElementById('opt-leader-box')?.classList.toggle('hidden', activeKind !== 'leader');
-
-      // 選択オブジェクトのプロパティ反映
-      const txtInp = document.getElementById('inp-label-text');
-      if (txtInp && document.activeElement !== txtInp) {
-        txtInp.value = sel && typeof sel.text === 'string' ? sel.text : '';
-      }
-
-      if (sel) {
-        const colInp = document.getElementById('inp-stroke-color');
-        if (colInp && sel.color) colInp.value = sel.color;
-        const lsSel = document.getElementById('sel-line-style');
-        if (lsSel && sel.lineStyle) lsSel.value = sel.lineStyle;
-        const dpSel = document.getElementById('sel-dash-pattern');
-        if (dpSel) dpSel.value = sel.dashPattern || 'none';
-        const a1Sel = document.getElementById('sel-arrow-start');
-        if (a1Sel) a1Sel.value = sel.arrowStart || 'none';
-        const a2Sel = document.getElementById('sel-arrow-end');
-        if (a2Sel) a2Sel.value = sel.arrowEnd || 'none';
-        const opInp = document.getElementById('inp-obj-opacity');
-        const opLbl = document.getElementById('lbl-obj-opacity');
-        const opVal = typeof sel.opacity === 'number' ? sel.opacity : 100;
-        if (opInp) opInp.value = String(opVal);
-        if (opLbl) opLbl.textContent = `${opVal}%`;
-
-        if (sel.type === 'dimension') {
-          const posSel = document.getElementById('sel-dim-text-pos');
-          if (posSel) posSel.value = sel.textPos || 'center';
-          const extSel = document.getElementById('sel-dim-ext-style');
-          if (extSel) extSel.value = sel.dimExtStyle || 'tick_short';
-        }
-        if (sel.type === 'radius_dim') {
-          const rkSel = document.getElementById('sel-radius-kind');
-          if (rkSel) rkSel.value = sel.dimKind || 'radius';
-        }
-        if (sel.type === 'text') {
-          const tbSel = document.getElementById('sel-text-box-style');
-          if (tbSel) tbSel.value = sel.textBoxStyle || 'none';
-          const fLbl = document.getElementById('lbl-text-font-size');
-          if (fLbl) fLbl.textContent = `${sel.fontSize || 24}px`;
-        }
-        if (sel.type === 'leader') {
-          const lCol = document.getElementById('inp-leader-line-color');
-          const tCol = document.getElementById('inp-leader-text-color');
-          const lfLbl = document.getElementById('lbl-leader-font-size');
-          if (lCol) lCol.value = sel.color || '#dc2626';
-          if (tCol) tCol.value = sel.textColor || sel.color || '#dc2626';
-          if (lfLbl) lfLbl.textContent = `${sel.fontSize || 21}px`;
-        }
-      }
-
-      // 表編集パネル表示
-      const tblPanel = document.getElementById('table-edit-panel');
-      if (tblPanel) {
-        const isTbl = sel && sel.type === 'table';
-        tblPanel.classList.toggle('hidden', !isTbl);
-        if (isTbl && sel.cells) {
-          const r = Math.min(state.tableSelRow, sel.cells.length - 1);
-          const c = Math.min(state.tableSelCol, (sel.cells[0]?.length || 1) - 1);
-          state.tableSelRow = r;
-          state.tableSelCol = c;
-          const coordLbl = document.getElementById('lbl-table-cell-coord');
-          if (coordLbl) coordLbl.textContent = `R${r + 1}:C${c + 1}`;
-          const cellInp = document.getElementById('inp-table-cell-text');
-          if (cellInp && document.activeElement !== cellInp) {
-            cellInp.value = sel.cells[r]?.[c]?.text || '';
-          }
-        }
-      }
-
-      // トリミングボタン表示
-      const isMedia = sel && (sel.type === 'image' || sel.type === 'pdf' || sel.type === 'dxf');
-      document.getElementById('btn-start-crop')?.classList.toggle('hidden', !isMedia || state.cropMode);
-      document.getElementById('box-crop-confirm')?.classList.toggle('hidden', !state.cropMode);
-
-      if (isMobileUiActive()) renderMobileContextBar();
-    }
-
-    // ==================== 書式・プロパティ変更ハンドラ ====================
-    function setColor(col) {
-      state.color = col;
-      const inp = document.getElementById('inp-stroke-color');
-      if (inp) inp.value = col;
-      const selSet = getSelectedIndicesSet();
-      if (selSet.size > 0) {
-        pushUndoSnapshot();
-        selSet.forEach(i => { if (state.objects[i]) state.objects[i].color = col; });
-        autoSaveCanvas();
-      }
-      syncToolUi();
-      renderCanvas();
-    }
-
-    function setStrokeWidth(w) {
-      state.strokeWidth = w;
-      const selSet = getSelectedIndicesSet();
-      if (selSet.size > 0) {
-        pushUndoSnapshot();
-        selSet.forEach(i => { if (state.objects[i]) state.objects[i].strokeWidth = w; });
-        autoSaveCanvas();
-      }
-      renderCanvas();
-    }
-
-    function setLineStyle(st) {
-      state.lineStyle = st;
-      const selSet = getSelectedIndicesSet();
-      if (selSet.size > 0) {
-        pushUndoSnapshot();
-        selSet.forEach(i => { if (state.objects[i]) state.objects[i].lineStyle = st; });
-        autoSaveCanvas();
-      }
-      renderCanvas();
-    }
-
-    function setDashPattern(dp) {
-      state.dashPattern = dp;
-      const selSet = getSelectedIndicesSet();
-      if (selSet.size > 0) {
-        pushUndoSnapshot();
-        selSet.forEach(i => { if (state.objects[i]) state.objects[i].dashPattern = dp; });
-        autoSaveCanvas();
-      }
-      renderCanvas();
-    }
-
-    function setArrowStart(st) {
-      state.arrowStart = st;
-      const selSet = getSelectedIndicesSet();
-      if (selSet.size > 0) {
-        pushUndoSnapshot();
-        selSet.forEach(i => { if (state.objects[i]) state.objects[i].arrowStart = st; });
-        autoSaveCanvas();
-      }
-      renderCanvas();
-    }
-
-    function setArrowEnd(st) {
-      state.arrowEnd = st;
-      const selSet = getSelectedIndicesSet();
-      if (selSet.size > 0) {
-        pushUndoSnapshot();
-        selSet.forEach(i => { if (state.objects[i]) state.objects[i].arrowEnd = st; });
-        autoSaveCanvas();
-      }
-      renderCanvas();
-    }
-
-    function swapSelectedArrowEnds() {
-      const o = state.objects[state.selectedIndex];
-      if (!o || typeof o.x1 !== 'number') return;
-      pushUndoSnapshot();
-      if (o.type !== 'leader') {
-        [o.x1, o.x2] = [o.x2, o.x1];
-        [o.y1, o.y2] = [o.y2, o.y1];
-      }
-      const tmp = o.arrowStart || 'none';
-      o.arrowStart = o.arrowEnd || 'none';
-      o.arrowEnd = tmp;
-      syncToolUi();
-      renderCanvas();
-      autoSaveCanvas();
-    }
-
-    function setParallelGap(gap) {
-      state.parallelGap = Math.max(4, Math.min(120, gap || 22));
-      const o = state.objects[state.selectedIndex];
-      if (o && o.type === 'parallel') {
-        o.gap = state.parallelGap;
-        renderCanvas();
-        autoSaveCanvas();
-      }
-    }
-
-    function setHatchPattern(pat) {
-      state.hatchPattern = pat;
-      const o = state.objects[state.selectedIndex];
-      if (o && o.type === 'hatch') {
-        pushUndoSnapshot();
-        o.hatchPattern = pat;
-        renderCanvas();
-        autoSaveCanvas();
-      }
-    }
-
-    function setBalloonStyle(st) {
-      state.balloonStyle = st;
-      const o = state.objects[state.selectedIndex];
-      if (o && o.type === 'balloon') {
-        pushUndoSnapshot();
-        o.balloonStyle = st;
-        o.text = formatBalloonLabel(o.num || 1, st);
-        renderCanvas();
-        autoSaveCanvas();
-      }
-    }
-
-    function resetBalloonCounter() {
-      state.balloonNext = 1;
-      showToast(`🔄 連番バルーンを「${formatBalloonLabel(1, state.balloonStyle)}」にリセットしました`);
-    }
-
-    function toggleSelectedBalloonCase() {
-      const o = state.objects[state.selectedIndex];
-      const nextStyle = state.balloonStyle === 'upper' ? 'lower' : 'upper';
-      state.balloonStyle = nextStyle;
-      const sel = document.getElementById('sel-balloon-style');
-      if (sel) sel.value = nextStyle;
-      if (o && o.type === 'balloon') {
-        pushUndoSnapshot();
-        o.balloonStyle = nextStyle;
-        o.text = formatBalloonLabel(o.num || 1, nextStyle);
-        renderCanvas();
-        autoSaveCanvas();
-      }
-      syncToolUi();
-    }
-
-    function updateSelectedObjectText(txt) {
-      const o = state.objects[state.selectedIndex];
-      if (!o) return;
-      o.text = txt;
-      renderCanvas();
-      autoSaveCanvas();
-    }
-
-    function toggleFillTint() {
-      state.fillTint = !state.fillTint;
-      const selSet = getSelectedIndicesSet();
-      if (selSet.size > 0) {
-        pushUndoSnapshot();
-        selSet.forEach(i => { if (state.objects[i]) state.objects[i].fillTint = state.fillTint; });
-        autoSaveCanvas();
-      }
-      syncToolUi();
-      renderCanvas();
-    }
-
-    function bringSelectedToFront() {
-      const indices = Array.from(getSelectedIndicesSet()).sort((a, b) => a - b);
-      if (indices.length === 0) return;
-      pushUndoSnapshot();
-      const picked = indices.map(i => state.objects[i]);
-      const rest = state.objects.filter((_, i) => !indices.includes(i));
-      state.objects = [...rest, ...picked];
-      state.selectedIndices = picked.map((_, k) => rest.length + k);
-      state.selectedIndex = state.selectedIndices[state.selectedIndices.length - 1] ?? -1;
-      syncToolUi();
-      renderCanvas();
-      autoSaveCanvas();
-      showToast('⬆️ 最前面へ移動しました');
-    }
-
-    function sendSelectedToBack() {
-      const indices = Array.from(getSelectedIndicesSet()).sort((a, b) => a - b);
-      if (indices.length === 0) return;
-      pushUndoSnapshot();
-      const picked = indices.map(i => state.objects[i]);
-      const rest = state.objects.filter((_, i) => !indices.includes(i));
-      state.objects = [...picked, ...rest];
-      state.selectedIndices = picked.map((_, k) => k);
-      state.selectedIndex = state.selectedIndices[state.selectedIndices.length - 1] ?? -1;
-      syncToolUi();
-      renderCanvas();
-      autoSaveCanvas();
-      showToast('⬇️ 最背面へ移動しました');
-    }
-
-    function setDimTextPos(pos) {
-      state.dimTextPos = pos;
-      const o = state.objects[state.selectedIndex];
-      if (o && o.type === 'dimension') {
-        pushUndoSnapshot();
-        o.textPos = pos;
-        o.labelOffsetX = 0;
-        o.labelOffsetY = 0;
-        autoSaveCanvas();
-      }
-      renderCanvas();
-    }
-
-    function adjustSelectedDimOffset(delta) {
-      const o = state.objects[state.selectedIndex];
-      if (!o || o.type !== 'dimension') return;
-      pushUndoSnapshot();
-      o.dimOffset = (Number(o.dimOffset) || 0) + delta;
-      syncToolUi();
-      renderCanvas();
-      autoSaveCanvas();
-    }
-
-    function setDimExtStyle(st) {
-      state.dimExtStyle = st;
-      const o = state.objects[state.selectedIndex];
-      if (o && o.type === 'dimension') {
-        pushUndoSnapshot();
-        o.dimExtStyle = st;
-        autoSaveCanvas();
-      }
-      renderCanvas();
-    }
-
-    function setTextBoxStyle(st) {
-      state.textBoxStyle = st;
-      const o = state.objects[state.selectedIndex];
-      if (o && o.type === 'text') {
-        pushUndoSnapshot();
-        o.textBoxStyle = st;
-        autoSaveCanvas();
-      }
-      renderCanvas();
-    }
-
-    function adjustSelectedTextFontSize(delta) {
-      const o = state.objects[state.selectedIndex];
-      if (o && o.type === 'text') {
-        pushUndoSnapshot();
-        o.fontSize = Math.max(12, Math.min(64, (Number(o.fontSize) || 24) + delta));
-        state.textFontSize = o.fontSize;
-        syncToolUi();
-        renderCanvas();
-        autoSaveCanvas();
-      } else {
-        state.textFontSize = Math.max(12, Math.min(64, (Number(state.textFontSize) || 24) + delta));
-        syncToolUi();
-      }
-    }
-
-    function setRadiusDimKind(kind) {
-      state.radiusDimKind = kind;
-      const o = state.objects[state.selectedIndex];
-      if (o && o.type === 'radius_dim') {
-        pushUndoSnapshot();
-        o.dimKind = kind;
-        autoSaveCanvas();
-      }
-      renderCanvas();
-    }
-
-    function toggleSelectedAngleReflex() {
-      const o = state.objects[state.selectedIndex];
-      if (!o || o.type !== 'angle_dim') return;
-      pushUndoSnapshot();
-      o.useReflex = !o.useReflex;
-      renderCanvas();
-      autoSaveCanvas();
-    }
-
-    function adjustSelectedAngleArcR(delta) {
-      const o = state.objects[state.selectedIndex];
-      if (!o || o.type !== 'angle_dim') return;
-      pushUndoSnapshot();
-      o.arcR = Math.max(24, Math.min(260, (Number(o.arcR) || 68) + delta));
-      renderCanvas();
-      autoSaveCanvas();
-    }
-
-    function setLeaderLineColor(col) {
-      state.color = col;
-      const o = state.objects[state.selectedIndex];
-      if (o && o.type === 'leader') {
-        o.color = col;
-        autoSaveCanvas();
-      }
-      syncToolUi();
-      renderCanvas();
-    }
-
-    function setLeaderTextColor(col) {
-      state.leaderTextColor = col;
-      const o = state.objects[state.selectedIndex];
-      if (o && o.type === 'leader') {
-        o.textColor = col;
-        autoSaveCanvas();
-      }
-      syncToolUi();
-      renderCanvas();
-    }
-
-    function resetLeaderTextColor() {
-      state.leaderTextColor = '';
-      const o = state.objects[state.selectedIndex];
-      if (o && o.type === 'leader') {
-        o.textColor = '';
-        autoSaveCanvas();
-      }
-      syncToolUi();
-      renderCanvas();
-    }
-
-    function adjustSelectedLeaderFontSize(delta) {
-      const o = state.objects[state.selectedIndex];
-      if (o && o.type === 'leader') {
-        pushUndoSnapshot();
-        o.fontSize = Math.max(14, Math.min(36, (Number(o.fontSize) || 21) + delta));
-        state.leaderFontSize = o.fontSize;
-        syncToolUi();
-        renderCanvas();
-        autoSaveCanvas();
-      } else {
-        state.leaderFontSize = Math.max(14, Math.min(36, (Number(state.leaderFontSize) || 21) + delta));
-        syncToolUi();
-      }
-    }
-
-    function setObjectOpacity(val) {
-      const lbl = document.getElementById('lbl-obj-opacity');
-      if (lbl) lbl.textContent = `${val}%`;
-      const selSet = getSelectedIndicesSet();
-      if (selSet.size > 0) {
-        selSet.forEach(i => { if (state.objects[i]) state.objects[i].opacity = val; });
-        renderCanvas();
-        autoSaveCanvas();
-      }
-    }
-
-    function toggleMultiSelectMode() {
-      state.multiSelectMode = !state.multiSelectMode;
-      const btn = document.getElementById('btn-multi-select');
-      if (btn) {
-        btn.classList.toggle('bg-amber-600', state.multiSelectMode);
-        btn.classList.toggle('text-white', state.multiSelectMode);
-      }
-      showToast(state.multiSelectMode ? '☑️ 複数選択モード ON' : '複数選択モード OFF');
-    }
-
-    function groupSelectedObjects() {
-      const indices = Array.from(getSelectedIndicesSet());
-      if (indices.length < 2) {
-        showToast('2つ以上の図形を選択してからグループ化してください');
-        return;
-      }
-      pushUndoSnapshot();
-      const gid = 'grp_' + Date.now();
-      indices.forEach(i => { if (state.objects[i]) state.objects[i].groupId = gid; });
-      state.multiSelectMode = false;
-      syncToolUi();
-      renderCanvas();
-      autoSaveCanvas();
-      showToast(`🔗 ${indices.length}個の要素をグループ化しました`);
-    }
-
-    function ungroupSelectedObjects() {
-      const indices = Array.from(getSelectedIndicesSet());
-      if (indices.length === 0) return;
-      pushUndoSnapshot();
-      indices.forEach(i => { if (state.objects[i]) delete state.objects[i].groupId; });
-      syncToolUi();
-      renderCanvas();
-      autoSaveCanvas();
-      showToast('🔓 グループ化を解除しました');
-    }
-
-    function duplicateSelected() {
-      const indices = Array.from(getSelectedIndicesSet()).sort((a, b) => a - b);
-      if (indices.length === 0) {
-        showToast('複製する要素を選択してください');
-        return;
-      }
-      pushUndoSnapshot();
-      const newGid = indices.length > 1 ? 'grp_' + Date.now() : null;
-      const newIndices = [];
-      indices.forEach(idx => {
-        const copy = JSON.parse(JSON.stringify(serializeObjects([state.objects[idx]])[0]));
-        if (newGid) copy.groupId = newGid;
-        else delete copy.groupId;
-        translateSingleObject(copy, 24, 24);
-        state.objects.push(copy);
-        newIndices.push(state.objects.length - 1);
-      });
-      state.selectedIndices = newIndices;
-      state.selectedIndex = newIndices[newIndices.length - 1] ?? -1;
-      syncToolUi();
-      renderCanvas();
-      autoSaveCanvas();
-      showToast('📋 選択要素を複製しました');
-    }
-
-    function deleteSelected() {
-      const indices = Array.from(getSelectedIndicesSet()).sort((a, b) => b - a);
-      if (indices.length === 0) return;
-      pushUndoSnapshot();
-      indices.forEach(i => state.objects.splice(i, 1));
-      state.selectedIndex = -1;
-      state.selectedIndices = [];
-      syncToolUi();
-      renderCanvas();
-      autoSaveCanvas();
-      showToast('🗑️ 選択要素を削除しました');
-    }
-
-    let clearArmed = false;
-    function clearAllCanvasWithConfirm() {
-      if (!clearArmed) {
-        clearArmed = true;
-        const btn = document.getElementById('btn-clear-all');
-        if (btn) btn.textContent = '⚠️確定';
-        showToast('⚠️ もう一度「確定」を押すと全消去します');
-        setTimeout(() => {
-          clearArmed = false;
-          const b = document.getElementById('btn-clear-all');
-          if (b) b.textContent = '全消';
-        }, 3000);
-        return;
-      }
-      clearArmed = false;
-      const b = document.getElementById('btn-clear-all');
-      if (b) b.textContent = '全消';
-      pushUndoSnapshot();
-      state.objects = [];
-      state.selectedIndex = -1;
-      state.selectedIndices = [];
-      syncToolUi();
-      renderCanvas();
-      autoSaveCanvas();
-      showToast('キャンバスをクリアしました');
-    }
-
-    function setBgType(t) {
-      state.bgType = t;
-      document.querySelectorAll('.bg-type-btn').forEach(b => {
-        const active = b.id === `bg-btn-${t}`;
-        b.classList.toggle('bg-emerald-600', active);
-        b.classList.toggle('text-white', active);
-        b.classList.toggle('bg-[#2b2b30]', !active);
-        b.classList.toggle('text-slate-300', !active);
-      });
-      renderCanvas();
-      autoSaveCanvas();
-    }
-
-    function setBgTintColor(col) {
-      state.bgTintColor = col;
-      setBgType('tint');
-    }
-
-    function setBgAlpha(val) {
-      state.bgAlpha = val;
-      const lbl = document.getElementById('lbl-bg-alpha');
-      if (lbl) lbl.textContent = `${val}%`;
-      setBgType('tint');
-    }
-
-    // ==================== 3×3 空白表操作 ====================
-    function createDefaultTableObject(x, y) {
-      return {
-        type: 'table',
-        x,
-        y,
-        colWidths: [96, 96, 96],
-        rowHeights: [36, 36, 36],
-        fontSize: 15,
-        color: '#0f172a',
-        borderColor: '#0f172a',
-        opacity: 100,
-        cells: [
-          [{ text: '', bg: '#f1f5f9', color: '#0f172a', bold: true, diag: 'none' }, { text: '', bg: '#f1f5f9', color: '#0f172a', bold: true, diag: 'none' }, { text: '', bg: '#f1f5f9', color: '#0f172a', bold: true, diag: 'none' }],
-          [{ text: '', bg: '#ffffff', color: '#0f172a', bold: false, diag: 'none' }, { text: '', bg: '#ffffff', color: '#0f172a', bold: false, diag: 'none' }, { text: '', bg: '#ffffff', color: '#0f172a', bold: false, diag: 'none' }],
-          [{ text: '', bg: '#ffffff', color: '#0f172a', bold: false, diag: 'none' }, { text: '', bg: '#ffffff', color: '#0f172a', bold: false, diag: 'none' }, { text: '', bg: '#ffffff', color: '#0f172a', bold: false, diag: 'none' }]
-        ]
-      };
-    }
-
-    function updateSelectedTableCellText(txt) {
-      const o = state.objects[state.selectedIndex];
-      if (!o || o.type !== 'table') return;
-      const cell = o.cells[state.tableSelRow]?.[state.tableSelCol];
-      if (cell) {
-        cell.text = txt;
-        renderCanvas();
-        autoSaveCanvas();
-      }
-    }
-
-    function setSelectedTableCellBg(col) {
-      const o = state.objects[state.selectedIndex];
-      if (!o || o.type !== 'table') return;
-      const cell = o.cells[state.tableSelRow]?.[state.tableSelCol];
-      if (cell) {
-        cell.bg = col;
-        renderCanvas();
-        autoSaveCanvas();
-      }
-    }
-
-    function toggleSelectedTableCellBold() {
-      const o = state.objects[state.selectedIndex];
-      if (!o || o.type !== 'table') return;
-      const cell = o.cells[state.tableSelRow]?.[state.tableSelCol];
-      if (cell) {
-        cell.bold = !cell.bold;
-        renderCanvas();
-        autoSaveCanvas();
-      }
-    }
-
-    function setSelectedTableCellDiag(diag) {
-      const o = state.objects[state.selectedIndex];
-      if (!o || o.type !== 'table') return;
-      const cell = o.cells[state.tableSelRow]?.[state.tableSelCol];
-      if (cell) {
-        cell.diag = diag;
-        renderCanvas();
-        autoSaveCanvas();
-      }
-    }
-
-    function modifySelectedTableGrid(action) {
-      const o = state.objects[state.selectedIndex];
-      if (!o || o.type !== 'table') return;
-      pushUndoSnapshot();
-      const cols = o.colWidths.length;
-      if (action === 'addRow') {
-        o.rowHeights.push(36);
-        o.cells.push(Array.from({ length: cols }, () => ({ text: '', bg: '#ffffff', color: '#0f172a', bold: false, diag: 'none' })));
-      } else if (action === 'delRow' && o.rowHeights.length > 1) {
-        o.rowHeights.pop();
-        o.cells.pop();
-      } else if (action === 'addCol') {
-        o.colWidths.push(96);
-        o.cells.forEach((row, r) => row.push({ text: '', bg: r === 0 ? '#f1f5f9' : '#ffffff', color: '#0f172a', bold: r === 0, diag: 'none' }));
-      } else if (action === 'delCol' && o.colWidths.length > 1) {
-        o.colWidths.pop();
-        o.cells.forEach(row => row.pop());
-      }
-      syncToolUi();
-      renderCanvas();
-      autoSaveCanvas();
-    }
-
-    // ==================== CAD幾何スナップ ＆ 角度スナップ ====================
-    function toggleCadSnap() {
-      state.cadSnap = !state.cadSnap;
-      const btn = document.getElementById('btn-cad-snap');
-      if (btn) {
-        btn.textContent = state.cadSnap ? '🧲 スナップ: ON' : '🧲 スナップ: OFF';
-        btn.classList.toggle('text-emerald-300', state.cadSnap);
-        btn.classList.toggle('text-slate-400', !state.cadSnap);
-      }
-      if (!state.cadSnap) state.activeSnapPt = null;
-      renderCanvas();
-    }
-
-    function openSnapSettingsModal() {
-      openModal('modal-snap-settings');
-    }
-
-    function applyAngleSnap(x1, y1, x2, y2, shiftKey = false) {
-      const mode = shiftKey && state.angleSnap === 'off' ? '15' : state.angleSnap;
+    function projectPointOnSegment(px, py, x1, y1, x2, y2) {
       const dx = x2 - x1;
       const dy = y2 - y1;
-      const dist = Math.hypot(dx, dy);
-      if (dist < 2 || mode === 'off') {
-        const deg = Math.round(((Math.atan2(dy, dx) * 180) / Math.PI + 360) % 360);
-        return { x: Math.round(x2), y: Math.round(y2), deg, dist: Math.round(dist) };
-      }
-      const stepDeg = mode === '90' ? 90 : 15;
-      const stepRad = (stepDeg * Math.PI) / 180;
-      const snapRad = Math.round(Math.atan2(dy, dx) / stepRad) * stepRad;
-      return {
-        x: Math.round(x1 + Math.cos(snapRad) * dist),
-        y: Math.round(y1 + Math.sin(snapRad) * dist),
-        deg: Math.round(((snapRad * 180) / Math.PI + 360) % 360),
-        dist: Math.round(dist)
-      };
-    }
-
-    function extractAllSegments() {
-      const segs = [];
-      state.objects.forEach((o, idx) => {
-        if (idx === state.selectedIndex && state.dragging) return;
-        if (typeof o.x1 === 'number' && typeof o.x2 === 'number') {
-          segs.push([o.x1, o.y1, o.x2, o.y2]);
-        } else if (o.type === 'polyline' && Array.isArray(o.points)) {
-          for (let i = 0; i < o.points.length - 1; i++) {
-            segs.push([o.points[i].x, o.points[i].y, o.points[i + 1].x, o.points[i + 1].y]);
-          }
-          if (o.closed && o.points.length > 2) {
-            const last = o.points[o.points.length - 1];
-            segs.push([last.x, last.y, o.points[0].x, o.points[0].y]);
-          }
-        } else if (['rect', 'roundrect', 'hatch', 'image', 'pdf', 'dxf'].includes(o.type)) {
-          const x = o.x, y = o.y, w = o.w || 80, h = o.h || 60;
-          segs.push([x, y, x + w, y], [x + w, y, x + w, y + h], [x + w, y + h, x, y + h], [x, y + h, x, y]);
-        }
-      });
-      return segs;
+      const lenSq = dx * dx + dy * dy;
+      if (lenSq < 1) return null;
+      const t = ((px - x1) * dx + (py - y1) * dy) / lenSq;
+      if (t <= 0.03 || t >= 0.97) return null;
+      return { x: Math.round(x1 + t * dx), y: Math.round(y1 + t * dy) };
     }
 
     function snapPointToGeometry(rawPt, refPt = null) {
       state.activeSnapPt = null;
       if (!state.cadSnap) return rawPt;
 
-      const opts = state.snapOptions;
-      const candidates = [];
-      const segs = extractAllSegments();
+      const pts = [];
+      const segs = [];
+      const pushSeg = (ax, ay, bx, by) => {
+        segs.push([ax, ay, bx, by]);
+        if (state.snapOptions.endpoint) {
+          pts.push({ x: ax, y: ay, kind: 'endpoint', label: '端点' });
+          pts.push({ x: bx, y: by, kind: 'endpoint', label: '端点' });
+        }
+        if (state.snapOptions.midpoint) {
+          pts.push({ x: Math.round((ax + bx) / 2), y: Math.round((ay + by) / 2), kind: 'midpoint', label: '中点' });
+        }
+      };
 
       state.objects.forEach((o, idx) => {
-        if (idx === state.selectedIndex && state.dragging) return;
+        if (state.dragging && idx === state.selectedIndex) return;
         if (typeof o.x1 === 'number' && typeof o.x2 === 'number') {
-          if (opts.endpoint) {
-            candidates.push({ x: o.x1, y: o.y1, kind: 'endpoint', label: '端点' });
-            candidates.push({ x: o.x2, y: o.y2, kind: 'endpoint', label: '端点' });
-          }
-          if (opts.midpoint) {
-            candidates.push({ x: (o.x1 + o.x2) / 2, y: (o.y1 + o.y2) / 2, kind: 'midpoint', label: '中点' });
-          }
-          if (o.type === 'angle_dim' && typeof o.cx === 'number' && opts.endpoint) {
-            candidates.push({ x: o.cx, y: o.cy, kind: 'endpoint', label: '頂点' });
-          }
+          pushSeg(o.x1, o.y1, o.x2, o.y2);
         } else if (o.type === 'polyline' && Array.isArray(o.points)) {
-          o.points.forEach((p, pi) => {
-            if (opts.endpoint) candidates.push({ x: p.x, y: p.y, kind: 'endpoint', label: '頂点' });
-            if (opts.midpoint && pi < o.points.length - 1) {
-              const p2 = o.points[pi + 1];
-              candidates.push({ x: (p.x + p2.x) / 2, y: (p.y + p2.y) / 2, kind: 'midpoint', label: '中点' });
-            }
-          });
-        } else if (['rect', 'roundrect', 'hatch', 'image', 'pdf', 'dxf'].includes(o.type)) {
-          const x = o.x, y = o.y, w = o.w || 80, h = o.h || 60;
-          if (opts.endpoint) {
-            candidates.push({ x, y, kind: 'endpoint', label: '角点' }, { x: x + w, y, kind: 'endpoint', label: '角点' }, { x, y: y + h, kind: 'endpoint', label: '角点' }, { x: x + w, y: y + h, kind: 'endpoint', label: '角点' });
+          for (let i = 0; i < o.points.length - 1; i++) {
+            pushSeg(o.points[i].x, o.points[i].y, o.points[i + 1].x, o.points[i + 1].y);
           }
-          if (opts.midpoint) {
-            candidates.push({ x: x + w / 2, y, kind: 'midpoint', label: '中点' }, { x: x + w / 2, y: y + h, kind: 'midpoint', label: '中点' }, { x, y: y + h / 2, kind: 'midpoint', label: '中点' }, { x: x + w, y: y + h / 2, kind: 'midpoint', label: '中点' });
+          if (o.closed && o.points.length >= 3) {
+            const last = o.points[o.points.length - 1];
+            pushSeg(last.x, last.y, o.points[0].x, o.points[0].y);
           }
-          if (opts.center) {
-            candidates.push({ x: x + w / 2, y: y + h / 2, kind: 'center', label: '中心' });
+        } else if (['rect', 'roundrect', 'cloud', 'hatch', 'image', 'pdf', 'dxf'].includes(o.type)) {
+          const x1 = o.x, y1 = o.y, x2 = o.x + (o.w || 40), y2 = o.y + (o.h || 40);
+          pushSeg(x1, y1, x2, y1);
+          pushSeg(x2, y1, x2, y2);
+          pushSeg(x2, y2, x1, y2);
+          pushSeg(x1, y2, x1, y1);
+          if (state.snapOptions.center) {
+            pts.push({ x: Math.round((x1 + x2) / 2), y: Math.round((y1 + y2) / 2), kind: 'center', label: '中心' });
           }
         } else if (o.type === 'circle') {
-          const cx = o.x + (o.w || 60) / 2;
-          const cy = o.y + (o.h || 60) / 2;
-          const rx = (o.w || 60) / 2;
-          const ry = (o.h || 60) / 2;
-          if (opts.center) {
-            candidates.push({ x: cx, y: cy, kind: 'center', label: '中心' });
-            candidates.push({ x: cx + rx, y: cy, kind: 'center', label: '四分点' }, { x: cx - rx, y: cy, kind: 'center', label: '四分点' }, { x: cx, y: cy + ry, kind: 'center', label: '四分点' }, { x: cx, y: cy - ry, kind: 'center', label: '四分点' });
+          const cx = Math.round(o.x + (o.w || 40) / 2);
+          const cy = Math.round(o.y + (o.h || 40) / 2);
+          const rx = Math.abs(o.w || 40) / 2;
+          const ry = Math.abs(o.h || 40) / 2;
+          if (state.snapOptions.center) {
+            pts.push({ x: cx, y: cy, kind: 'center', label: '中心' });
+            pts.push({ x: Math.round(cx + rx), y: cy, kind: 'center', label: '四分点' });
+            pts.push({ x: Math.round(cx - rx), y: cy, kind: 'center', label: '四分点' });
+            pts.push({ x: cx, y: Math.round(cy + ry), kind: 'center', label: '四分点' });
+            pts.push({ x: cx, y: Math.round(cy - ry), kind: 'center', label: '四分点' });
           }
         }
       });
 
-      // 線分同士の交点
-      if (opts.intersection && segs.length >= 2) {
+      if (state.snapOptions.intersection && segs.length >= 2) {
         for (let i = 0; i < segs.length; i++) {
           for (let j = i + 1; j < segs.length; j++) {
-            const [x1, y1, x2, y2] = segs[i];
-            const [x3, y3, x4, y4] = segs[j];
-            const denom = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
-            if (Math.abs(denom) < 0.001) continue;
-            const t = ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) / denom;
-            const u = -((x1 - x2) * (y1 - y3) - (y1 - y2) * (x1 - x3)) / denom;
-            if (t >= 0 && t <= 1 && u >= 0 && u <= 1) {
-              candidates.push({
-                x: Math.round(x1 + t * (x2 - x1)),
-                y: Math.round(y1 + t * (y2 - y1)),
-                kind: 'intersection',
-                label: '交点'
-              });
-            }
+            const inter = computeSegmentIntersection(segs[i][0], segs[i][1], segs[i][2], segs[i][3], segs[j][0], segs[j][1], segs[j][2], segs[j][3]);
+            if (inter) pts.push({ x: inter.x, y: inter.y, kind: 'intersection', label: '交点' });
           }
         }
       }
 
       let best = null;
       let bestDist = 16;
-      for (const c of candidates) {
-        const d = Math.hypot(rawPt.x - c.x, rawPt.y - c.y);
+      for (const p of pts) {
+        const d = Math.hypot(rawPt.x - p.x, rawPt.y - p.y);
         if (d < bestDist) {
           bestDist = d;
-          best = c;
+          best = p;
         }
       }
       if (best) {
-        const pt = { x: Math.round(best.x), y: Math.round(best.y) };
-        state.activeSnapPt = { ...pt, kind: best.kind, label: best.label };
-        return pt;
+        state.activeSnapPt = best;
+        return { x: best.x, y: best.y };
       }
 
-      // 垂線の足・線上スナップ
-      if (opts.perpendicular) {
+      if (state.snapOptions.perpendicular) {
         const base = refPt || rawPt;
-        let bestPerp = null;
-        let bestPerpDist = 11;
-        for (const [x1, y1, x2, y2] of segs) {
-          const dx = x2 - x1;
-          const dy = y2 - y1;
-          const lenSq = dx * dx + dy * dy;
-          if (lenSq < 4) continue;
-          const t = ((base.x - x1) * dx + (base.y - y1) * dy) / lenSq;
-          if (t > 0.03 && t < 0.97) {
-            const px = x1 + t * dx;
-            const py = y1 + t * dy;
-            const d = Math.hypot(rawPt.x - px, rawPt.y - py);
-            if (d < bestPerpDist) {
-              bestPerpDist = d;
-              bestPerp = { x: Math.round(px), y: Math.round(py), kind: 'perpendicular', label: '垂線' };
-            }
+        for (const [ax, ay, bx, by] of segs) {
+          const foot = projectPointOnSegment(base.x, base.y, ax, ay, bx, by);
+          if (foot && Math.hypot(rawPt.x - foot.x, rawPt.y - foot.y) < 12) {
+            state.activeSnapPt = { x: foot.x, y: foot.y, kind: 'perpendicular', label: '垂線' };
+            return foot;
           }
         }
-        if (bestPerp) {
-          state.activeSnapPt = bestPerp;
-          return { x: bestPerp.x, y: bestPerp.y };
-        }
       }
 
-      // グリッド吸着（14px刻み）
-      if (opts.grid) {
+      if (state.snapOptions.grid) {
         const gx = Math.round(rawPt.x / 14) * 14;
         const gy = Math.round(rawPt.y / 14) * 14;
         if (Math.hypot(rawPt.x - gx, rawPt.y - gy) < 7) {
@@ -2227,78 +2092,80 @@
       return rawPt;
     }
 
-    // ==================== 描画ヘルパー（先端自動セットバック・線種10種・矢印12種） ====================
-    function getArrowTrimOffset(type, sw) {
-      if (!type || type === 'none') return 0;
-      const s = Math.max(11, sw * 3.2);
-      if (type === 'filled') return s * 0.65;
-      if (type === 'open') return s * 0.95;
-      if (type === 'sharp') return Math.max(3, sw * 0.7);
-      if (type === 'stealth') return s * 0.72;
-      if (type === 'harpoon') return s * 0.75;
-      if (type === 'double_arrow') return s * 1.1;
-      if (type === 'circle') return s * 0.2;
-      if (type === 'open_circle') return s * 0.38;
-      if (type === 'square') return s * 0.25;
-      if (type === 'diamond') return s * 0.3;
-      return 0;
-    }
-
-    function getTrimmedSegmentPoints(x1, y1, x2, y2, startType, endType, sw) {
+    function applyAngleSnap(x1, y1, x2, y2, shiftKey = false) {
+      const mode = shiftKey && state.angleSnap === 'off' ? '15' : state.angleSnap;
       const dx = x2 - x1;
       const dy = y2 - y1;
-      const len = Math.hypot(dx, dy);
-      if (len < 2) return { x1, y1, x2, y2 };
-      const trim1 = getArrowTrimOffset(startType, sw);
-      const trim2 = getArrowTrimOffset(endType, sw);
-      if (trim1 + trim2 >= len * 0.85) return { x1, y1, x2, y2 };
-      const ux = dx / len;
-      const uy = dy / len;
+      const dist = Math.hypot(dx, dy);
+      if (dist < 2 || mode === 'off') {
+        const deg = Math.round(((Math.atan2(dy, dx) * 180) / Math.PI + 360) % 360);
+        return { x: x2, y: y2, dist: Math.round(dist), deg };
+      }
+      const stepDeg = mode === '90' ? 90 : 15;
+      const stepRad = (stepDeg * Math.PI) / 180;
+      const snapRad = Math.round(Math.atan2(dy, dx) / stepRad) * stepRad;
+      const deg = Math.round(((snapRad * 180) / Math.PI + 360) % 360);
       return {
-        x1: x1 + ux * trim1,
-        y1: y1 + uy * trim1,
-        x2: x2 - ux * trim2,
-        y2: y2 - uy * trim2
+        x: Math.round(x1 + dist * Math.cos(snapRad)),
+        y: Math.round(y1 + dist * Math.sin(snapRad)),
+        dist: Math.round(dist),
+        deg
       };
     }
 
-    function getResolvedLineDash(lineStyle, dashPattern, sw) {
+    // ==================== Canvas 2D 高精細ベクター描画エンジン ====================
+    function getDashArrayForObject(obj, sw) {
       const defs = getStyleDefs();
-      if (dashPattern && dashPattern !== 'none') {
-        const found = (defs.dashPatterns || []).find(d => d.id === dashPattern);
-        if (found && Array.isArray(found.mult)) {
-          return found.mult.map(m => Math.max(1, m * sw));
-        }
+      if (obj.dashPattern && obj.dashPattern !== 'none') {
+        const found = (defs.dashPatterns || []).find(d => d.id === obj.dashPattern);
+        if (found && Array.isArray(found.mult)) return found.mult.map(m => m * sw);
       }
-      if (lineStyle === 'dashed') return [sw * 3.5, sw * 2.2];
-      if (lineStyle === 'dashdot') return [sw * 5.5, sw * 1.6, sw * 0.8, sw * 1.6];
+      if (obj.lineStyle === 'dashed') return [sw * 3.5, sw * 2.2];
+      if (obj.lineStyle === 'dashdot') return [sw * 5.5, sw * 1.6, sw * 0.8, sw * 1.6];
       return [];
     }
 
-    function drawArrowMarker(ctx, type, x, y, ang, color, sw) {
+    function getArrowTrimOffset(type, sw) {
+      if (!type || type === 'none' || type === 'arch_tick' || type === 'bar') return 0;
+      const s = Math.max(11, sw * 3.2);
+      if (type === 'filled') return s * 0.65;
+      if (type === 'open') return s * 0.95;
+      if (type === 'stealth') return s * 0.72;
+      if (type === 'harpoon') return s * 0.75;
+      if (type === 'double_arrow') return s * 1.1;
+      if (type === 'open_circle') return s * 0.38;
+      if (type === 'circle') return s * 0.2;
+      if (type === 'square') return s * 0.25;
+      if (type === 'diamond') return s * 0.3;
+      if (type === 'sharp') return Math.max(3, sw * 0.7);
+      return 0;
+    }
+
+    function drawArrowMarker(ctx, type, x, y, ang, col, sw) {
       if (!type || type === 'none') return;
       const s = Math.max(11, sw * 3.2);
       ctx.save();
       ctx.translate(x, y);
       ctx.rotate(ang);
-      ctx.strokeStyle = color;
-      ctx.fillStyle = color;
-      ctx.lineWidth = sw;
+      ctx.strokeStyle = col;
+      ctx.fillStyle = col;
+      ctx.lineWidth = Math.max(1.8, sw * 0.85);
       ctx.setLineDash([]);
+
       if (type === 'filled') {
-        ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-s * 1.1, -s * 0.48); ctx.lineTo(-s * 1.1, s * 0.48); ctx.closePath(); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-s, -s * 0.48); ctx.lineTo(-s, s * 0.48); ctx.closePath(); ctx.fill();
       } else if (type === 'open') {
         ctx.fillStyle = '#ffffff';
-        ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-s * 1.1, -s * 0.48); ctx.lineTo(-s * 1.1, s * 0.48); ctx.closePath(); ctx.fill(); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-s, -s * 0.48); ctx.lineTo(-s, s * 0.48); ctx.closePath(); ctx.fill(); ctx.stroke();
       } else if (type === 'sharp') {
-        ctx.beginPath(); ctx.moveTo(-s, -s * 0.48); ctx.lineTo(0, 0); ctx.lineTo(-s, s * 0.48); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(-s * 0.9, -s * 0.48); ctx.lineTo(0, 0); ctx.lineTo(-s * 0.9, s * 0.48); ctx.stroke();
       } else if (type === 'stealth') {
-        ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-s * 1.2, -s * 0.5); ctx.lineTo(-s * 0.85, 0); ctx.lineTo(-s * 1.2, s * 0.5); ctx.closePath(); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-s * 1.1, -s * 0.48); ctx.lineTo(-s * 0.75, 0); ctx.lineTo(-s * 1.1, s * 0.48); ctx.closePath(); ctx.fill();
       } else if (type === 'harpoon') {
-        ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-s * 1.1, -s * 0.55); ctx.lineTo(-s * 0.85, 0); ctx.closePath(); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-s, -s * 0.48); ctx.lineTo(-s * 0.75, 0); ctx.closePath(); ctx.fill();
       } else if (type === 'double_arrow') {
-        ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-s * 0.85, -s * 0.44); ctx.lineTo(-s * 0.85, s * 0.44); ctx.closePath(); ctx.fill();
-        ctx.beginPath(); ctx.moveTo(-s * 0.65, 0); ctx.lineTo(-s * 1.5, -s * 0.44); ctx.lineTo(-s * 1.5, s * 0.44); ctx.closePath(); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-s * 0.75, -s * 0.45); ctx.lineTo(-s * 0.75, s * 0.45); ctx.closePath(); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(-s * 0.55, 0); ctx.lineTo(-s * 1.3, -s * 0.45); ctx.lineTo(-s * 1.3, s * 0.45); ctx.closePath(); ctx.fill();
       } else if (type === 'circle') {
         ctx.beginPath(); ctx.arc(0, 0, s * 0.36, 0, Math.PI * 2); ctx.fill();
       } else if (type === 'open_circle') {
@@ -2316,123 +2183,93 @@
       ctx.restore();
     }
 
-    function drawStyledSegment(ctx, x1, y1, x2, y2, color, sw, lineStyle = 'solid', dashPattern = 'none') {
-      const dx = x2 - x1;
-      const dy = y2 - y1;
-      const len = Math.hypot(dx, dy);
+    function drawStyledSegment(ctx, x1, y1, x2, y2, obj) {
+      const col = obj.color || '#dc2626';
+      const sw = obj.strokeWidth || 3.5;
+      const ls = obj.lineStyle || 'solid';
+      const ang = Math.atan2(y2 - y1, x2 - x1);
+      const len = Math.hypot(x2 - x1, y2 - y1);
       if (len < 1) return;
-      const ang = Math.atan2(dy, dx);
+
       const nx = -Math.sin(ang);
       const ny = Math.cos(ang);
+      ctx.strokeStyle = col;
+      ctx.lineWidth = sw;
+      ctx.setLineDash(getDashArrayForObject(obj, sw));
 
-      ctx.save();
-      ctx.strokeStyle = color;
-      ctx.fillStyle = color;
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
-      ctx.setLineDash(getResolvedLineDash(lineStyle, dashPattern, sw));
-
-      if (lineStyle === 'double') {
-        const g = Math.max(2.5, sw * 0.95);
-        ctx.lineWidth = Math.max(1.5, sw * 0.6);
-        ctx.beginPath(); ctx.moveTo(x1 + nx * g, y1 + ny * g); ctx.lineTo(x2 + nx * g, y2 + ny * g); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(x1 - nx * g, y1 - ny * g); ctx.lineTo(x2 - nx * g, y2 - ny * g); ctx.stroke();
-      } else if (lineStyle === 'triple') {
-        const g = Math.max(3.5, sw * 1.3);
-        ctx.lineWidth = Math.max(1.3, sw * 0.5);
-        [-g, 0, g].forEach(off => {
-          ctx.beginPath(); ctx.moveTo(x1 + nx * off, y1 + ny * off); ctx.lineTo(x2 + nx * off, y2 + ny * off); ctx.stroke();
-        });
-      } else if (lineStyle === 'thick_thin') {
+      if (ls === 'double') {
         const g = Math.max(3, sw * 1.1);
-        ctx.lineWidth = sw;
-        ctx.beginPath(); ctx.moveTo(x1 + nx * g, y1 + ny * g); ctx.lineTo(x2 + nx * g, y2 + ny * g); ctx.stroke();
-        ctx.lineWidth = Math.max(1.2, sw * 0.45);
-        ctx.beginPath(); ctx.moveTo(x1 - nx * g, y1 - ny * g); ctx.lineTo(x2 - nx * g, y2 - ny * g); ctx.stroke();
-      } else if (lineStyle === 'rail') {
-        const g = Math.max(3.5, sw * 1.2);
         ctx.lineWidth = Math.max(1.5, sw * 0.65);
         ctx.beginPath(); ctx.moveTo(x1 + nx * g, y1 + ny * g); ctx.lineTo(x2 + nx * g, y2 + ny * g); ctx.stroke();
         ctx.beginPath(); ctx.moveTo(x1 - nx * g, y1 - ny * g); ctx.lineTo(x2 - nx * g, y2 - ny * g); ctx.stroke();
-        ctx.setLineDash([]);
-        const step = Math.max(14, sw * 4.5);
-        for (let d = step * 0.5; d < len; d += step) {
-          const px = x1 + (dx / len) * d;
-          const py = y1 + (dy / len) * d;
+      } else if (ls === 'triple') {
+        const g = Math.max(4, sw * 1.3);
+        ctx.lineWidth = Math.max(1.3, sw * 0.55);
+        for (const m of [-1, 0, 1]) {
+          ctx.beginPath(); ctx.moveTo(x1 + nx * g * m, y1 + ny * g * m); ctx.lineTo(x2 + nx * g * m, y2 + ny * g * m); ctx.stroke();
+        }
+      } else if (ls === 'thick_thin') {
+        const g = Math.max(3.5, sw * 1.2);
+        ctx.lineWidth = sw * 1.2;
+        ctx.beginPath(); ctx.moveTo(x1 + nx * g, y1 + ny * g); ctx.lineTo(x2 + nx * g, y2 + ny * g); ctx.stroke();
+        ctx.lineWidth = Math.max(1.2, sw * 0.45);
+        ctx.beginPath(); ctx.moveTo(x1 - nx * g, y1 - ny * g); ctx.lineTo(x2 - nx * g, y2 - ny * g); ctx.stroke();
+      } else if (ls === 'rail') {
+        const g = Math.max(3, sw);
+        ctx.lineWidth = Math.max(1.4, sw * 0.6);
+        ctx.beginPath(); ctx.moveTo(x1 + nx * g, y1 + ny * g); ctx.lineTo(x2 + nx * g, y2 + ny * g); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(x1 - nx * g, y1 - ny * g); ctx.lineTo(x2 - nx * g, y2 - ny * g); ctx.stroke();
+        for (let d = 10; d < len - 6; d += 14) {
+          const px = x1 + Math.cos(ang) * d;
+          const py = y1 + Math.sin(ang) * d;
           ctx.beginPath(); ctx.moveTo(px + nx * (g + 2), py + ny * (g + 2)); ctx.lineTo(px - nx * (g + 2), py - ny * (g + 2)); ctx.stroke();
         }
-      } else if (lineStyle === 'wavy' || lineStyle === 'zigzag' || lineStyle === 'scallop') {
-        ctx.lineWidth = sw;
-        ctx.setLineDash([]);
-        const waveLen = Math.max(12, sw * 3.5);
-        const amp = Math.max(4, sw * 1.4);
-        const steps = Math.max(2, Math.floor(len / waveLen));
+      } else if (ls === 'wavy' || ls === 'zigzag' || ls === 'scallop') {
+        const step = 14;
+        const amp = Math.max(4, sw * 1.5);
         ctx.beginPath();
         ctx.moveTo(x1, y1);
+        const steps = Math.max(1, Math.floor(len / step));
         for (let i = 0; i < steps; i++) {
-          const t0 = i / steps;
-          const t1 = (i + 1) / steps;
-          const tm = (t0 + t1) / 2;
-          const mx = x1 + dx * tm;
-          const my = y1 + dy * tm;
-          const ex = x1 + dx * t1;
-          const ey = y1 + dy * t1;
-          const dir = lineStyle === 'scallop' ? -1 : (i % 2 === 0 ? 1 : -1);
-          if (lineStyle === 'zigzag') {
-            ctx.lineTo(mx + nx * amp * dir, my + ny * amp * dir);
+          const t1 = (i + 0.5) / steps;
+          const t2 = (i + 1) / steps;
+          const mx = x1 + (x2 - x1) * t1;
+          const my = y1 + (y2 - y1) * t1;
+          const ex = x1 + (x2 - x1) * t2;
+          const ey = y1 + (y2 - y1) * t2;
+          const side = ls === 'scallop' ? 1 : (i % 2 === 0 ? 1 : -1);
+          if (ls === 'zigzag') {
+            ctx.lineTo(mx + nx * amp * side, my + ny * amp * side);
             ctx.lineTo(ex, ey);
           } else {
-            ctx.quadraticCurveTo(mx + nx * amp * dir * 1.5, my + ny * amp * dir * 1.5, ex, ey);
+            ctx.quadraticCurveTo(mx + nx * amp * 1.4 * side, my + ny * amp * 1.4 * side, ex, ey);
           }
         }
         ctx.stroke();
       } else {
-        ctx.lineWidth = sw;
         ctx.beginPath();
         ctx.moveTo(x1, y1);
         ctx.lineTo(x2, y2);
         ctx.stroke();
       }
-      ctx.restore();
+      ctx.setLineDash([]);
     }
 
-    function buildCloudPath(ctx, x, y, w, h) {
-      const step = 22;
-      const pts = [];
-      for (let px = x; px < x + w; px += step) pts.push([px, y]);
-      for (let py = y; py < y + h; py += step) pts.push([x + w, py]);
-      for (let px = x + w; px > x; px -= step) pts.push([px, y + h]);
-      for (let py = y + h; py > y; py -= step) pts.push([x, py]);
-      if (pts.length < 3) pts.push([x, y], [x + w, y], [x + w, y + h], [x, y + h]);
-      ctx.beginPath();
-      ctx.moveTo(pts[0][0], pts[0][1]);
-      for (let i = 0; i < pts.length; i++) {
-        const [x1, y1] = pts[i];
-        const [x2, y2] = pts[(i + 1) % pts.length];
-        const mx = (x1 + x2) / 2;
-        const my = (y1 + y2) / 2;
-        const dx = x2 - x1;
-        const dy = y2 - y1;
-        const len = Math.hypot(dx, dy) || 1;
-        const nx = dy / len;
-        const ny = -dx / len;
-        const amp = Math.min(12, len * 0.48);
-        ctx.quadraticCurveTo(mx + nx * amp * 1.4, my + ny * amp * 1.4, x2, y2);
-      }
-      ctx.closePath();
-    }
-
-    function drawHatchArea(ctx, x, y, w, h, pat, color, sw, lineStyle, dashPattern) {
+    function drawHatchArea(ctx, o) {
+      const col = o.color || '#dc2626';
+      const pat = o.hatchPattern || 'diag45';
+      const x = o.x, y = o.y, w = o.w, h = o.h;
       ctx.save();
-      ctx.fillStyle = hexToRgba(color, 0.08);
+      ctx.fillStyle = hexToRgba(col, 0.08);
       ctx.fillRect(x, y, w, h);
       ctx.beginPath();
       ctx.rect(x, y, w, h);
       ctx.clip();
-      ctx.strokeStyle = color;
-      ctx.fillStyle = color;
-      ctx.lineWidth = 1.4;
+      ctx.strokeStyle = col;
+      ctx.fillStyle = col;
+      ctx.lineWidth = 1.6;
       const sp = 14;
+
       if (pat === 'diag45' || pat === 'cross') {
         for (let d = -h; d < w + h; d += sp) {
           ctx.beginPath(); ctx.moveTo(x + d, y + h); ctx.lineTo(x + d + h, y); ctx.stroke();
@@ -2443,21 +2280,13 @@
           ctx.beginPath(); ctx.moveTo(x + d, y); ctx.lineTo(x + d + h, y + h); ctx.stroke();
         }
       }
-      if (pat === 'grid' || pat === 'brick') {
-        for (let gx = x; gx <= x + w; gx += sp) {
-          ctx.beginPath(); ctx.moveTo(gx, y); ctx.lineTo(gx, y + h); ctx.stroke();
-        }
+      if (pat === 'grid' || pat === 'horiz') {
         for (let gy = y; gy <= y + h; gy += sp) {
           ctx.beginPath(); ctx.moveTo(x, gy); ctx.lineTo(x + w, gy); ctx.stroke();
         }
       }
-      if (pat === 'horiz') {
-        for (let gy = y + 6; gy <= y + h; gy += sp) {
-          ctx.beginPath(); ctx.moveTo(x, gy); ctx.lineTo(x + w, gy); ctx.stroke();
-        }
-      }
-      if (pat === 'vert') {
-        for (let gx = x + 6; gx <= x + w; gx += sp) {
+      if (pat === 'grid' || pat === 'vert') {
+        for (let gx = x; gx <= x + w; gx += sp) {
           ctx.beginPath(); ctx.moveTo(gx, y); ctx.lineTo(gx, y + h); ctx.stroke();
         }
       }
@@ -2465,435 +2294,103 @@
         for (let gx = x + 7; gx < x + w; gx += sp) {
           for (let gy = y + 7; gy < y + h; gy += sp) {
             ctx.beginPath(); ctx.arc(gx, gy, 1.6, 0, Math.PI * 2); ctx.fill();
-            if (pat === 'concrete') {
-              ctx.beginPath(); ctx.moveTo(gx + 3, gy - 3); ctx.lineTo(gx + 7, gy + 2); ctx.lineTo(gx + 2, gy + 4); ctx.closePath(); ctx.stroke();
+            if (pat === 'concrete' && (Math.round(gx + gy) % 28 === 0)) {
+              ctx.beginPath(); ctx.moveTo(gx + 3, gy - 3); ctx.lineTo(gx + 8, gy + 2); ctx.lineTo(gx + 2, gy + 4); ctx.closePath(); ctx.stroke();
             }
           }
         }
       }
+      if (pat === 'brick') {
+        let row = 0;
+        for (let gy = y; gy <= y + h; gy += sp) {
+          ctx.beginPath(); ctx.moveTo(x, gy); ctx.lineTo(x + w, gy); ctx.stroke();
+          const offset = (row % 2) * sp;
+          for (let gx = x + offset; gx <= x + w; gx += sp * 2) {
+            ctx.beginPath(); ctx.moveTo(gx, gy); ctx.lineTo(gx, gy + sp); ctx.stroke();
+          }
+          row++;
+        }
+      }
       if (pat === 'insulation') {
-        ctx.beginPath();
-        for (let px = x; px <= x + w; px += 8) {
-          const py = y + h / 2 + Math.sin((px - x) * 0.25) * (h * 0.35);
-          if (px === x) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+        for (let gy = y + 10; gy < y + h; gy += 22) {
+          ctx.beginPath();
+          ctx.moveTo(x, gy);
+          for (let gx = x; gx <= x + w; gx += 12) {
+            ctx.lineTo(gx + 6, gy - 7);
+            ctx.lineTo(gx + 12, gy + 7);
+          }
+          ctx.stroke();
         }
-        ctx.stroke();
       }
       ctx.restore();
-      ctx.save();
-      ctx.strokeStyle = color;
-      ctx.lineWidth = Math.max(1.5, sw * 0.6);
-      ctx.setLineDash(getResolvedLineDash(lineStyle, dashPattern, sw));
+      ctx.strokeStyle = col;
+      ctx.lineWidth = 2;
       ctx.strokeRect(x, y, w, h);
-      ctx.restore();
     }
 
-    function drawDimensionLine(ctx, o, isSelected, forExport) {
-      const col = o.color || '#2563eb';
-      const sw = o.strokeWidth || 2.5;
-      const dx = o.x2 - o.x1;
-      const dy = o.y2 - o.y1;
-      const len = Math.hypot(dx, dy) || 1;
-      const ang = Math.atan2(dy, dx);
-      const nx = -Math.sin(ang);
-      const ny = Math.cos(ang);
-      const off = Number(o.dimOffset) || 0;
-
-      const p1x = o.x1 + nx * off;
-      const p1y = o.y1 + ny * off;
-      const p2x = o.x2 + nx * off;
-      const p2y = o.y2 + ny * off;
-
-      const extStyle = o.dimExtStyle || 'tick_short';
-      ctx.save();
-      ctx.strokeStyle = col;
-      ctx.lineWidth = Math.max(1.4, sw * 0.65);
-
-      if (extStyle !== 'none_ext') {
-        const extLen = extStyle === 'tick_long' ? 24 : 14;
-        const sign = off >= 0 ? 1 : -1;
-        if (Math.abs(off) > 2) {
-          ctx.beginPath();
-          ctx.moveTo(o.x1, o.y1); ctx.lineTo(p1x + nx * sign * 8, p1y + ny * sign * 8);
-          ctx.moveTo(o.x2, o.y2); ctx.lineTo(p2x + nx * sign * 8, p2y + ny * sign * 8);
-          ctx.stroke();
-        } else {
-          ctx.beginPath();
-          ctx.moveTo(p1x - nx * extLen, p1y - ny * extLen); ctx.lineTo(p1x + nx * extLen, p1y + ny * extLen);
-          ctx.moveTo(p2x - nx * extLen, p2y - ny * extLen); ctx.lineTo(p2x + nx * extLen, p2y + ny * extLen);
-          ctx.stroke();
-        }
-      }
-
-      let aStart = 'arch_tick', aEnd = 'arch_tick';
-      if (extStyle === 'arrow_out') { aStart = 'filled'; aEnd = 'filled'; }
-      else if (extStyle === 'arrow_in') { aStart = 'sharp'; aEnd = 'sharp'; }
-      else if (extStyle === 'open_arrow') { aStart = 'open'; aEnd = 'open'; }
-      else if (extStyle === 'dot_ext') { aStart = 'dot'; aEnd = 'dot'; }
-      else if (extStyle === 'circle_open') { aStart = 'open_circle'; aEnd = 'open_circle'; }
-      else if (extStyle === 'bar_ext') { aStart = 'bar'; aEnd = 'bar'; }
-
-      const trimmed = getTrimmedSegmentPoints(p1x, p1y, p2x, p2y, aStart, aEnd, sw);
-      drawStyledSegment(ctx, trimmed.x1, trimmed.y1, trimmed.x2, trimmed.y2, col, sw, o.lineStyle || 'solid', o.dashPattern || 'none');
-      drawArrowMarker(ctx, aStart, p1x, p1y, ang + Math.PI, col, sw);
-      drawArrowMarker(ctx, aEnd, p2x, p2y, ang, col, sw);
-
-      const mmVal = Math.round(len * (state.mmPerPx || 5.0));
-      const labelStr = (o.text && o.text.trim()) ? o.text.trim() : `${mmVal.toLocaleString()}mm`;
-
-      let lx = (p1x + p2x) / 2;
-      let ly = (p1y + p2y) / 2;
-      const pos = o.textPos || 'center';
-      if (pos === 'above') { lx += nx * -16; ly += ny * -16; }
-      else if (pos === 'below') { lx += nx * 18; ly += ny * 18; }
-      else if (pos === 'right') { lx = p2x + Math.cos(ang) * 44; ly = p2y + Math.sin(ang) * 44; }
-      else if (pos === 'left') { lx = p1x - Math.cos(ang) * 44; ly = p1y - Math.sin(ang) * 44; }
-
-      lx += Number(o.labelOffsetX) || 0;
-      ly += Number(o.labelOffsetY) || 0;
-
-      if (Math.hypot(o.labelOffsetX || 0, o.labelOffsetY || 0) > 12) {
-        ctx.strokeStyle = col;
-        ctx.lineWidth = 1.2;
-        ctx.setLineDash([3, 3]);
-        ctx.beginPath(); ctx.moveTo((p1x + p2x) / 2, (p1y + p2y) / 2); ctx.lineTo(lx, ly); ctx.stroke();
-        ctx.setLineDash([]);
-      }
-
-      ctx.font = 'bold 18px sans-serif';
-      const tw = ctx.measureText(labelStr).width;
-      ctx.fillStyle = 'rgba(255,255,255,0.92)';
-      ctx.fillRect(lx - tw / 2 - 5, ly - 12, tw + 10, 22);
-      ctx.fillStyle = col;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(labelStr, lx, ly);
-
-      if (isSelected && !forExport) {
-        // 緑ハンドル（文字位置ドラッグ）
-        ctx.fillStyle = '#10b981';
-        ctx.beginPath(); ctx.arc(lx, ly - 16, 6, 0, Math.PI * 2); ctx.fill();
-        ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1.5; ctx.stroke();
-        // オレンジハンドル（平行オフセットドラッグ）
-        const ox = (p1x + p2x) / 2;
-        const oy = (p1y + p2y) / 2 + 16;
-        ctx.fillStyle = '#f59e0b';
-        ctx.beginPath(); ctx.arc(ox, oy, 6, 0, Math.PI * 2); ctx.fill();
-        ctx.stroke();
-      }
-      ctx.restore();
-    }
-
-    function drawAngleDimension(ctx, o, isSelected, forExport) {
-      const col = o.color || '#7c3aed';
-      const sw = o.strokeWidth || 2.5;
-      const r = Number(o.arcR) || 68;
-      const a1 = Math.atan2(o.y1 - o.cy, o.x1 - o.cx);
-      const a2 = Math.atan2(o.y2 - o.cy, o.x2 - o.cx);
-
-      ctx.save();
-      ctx.strokeStyle = col;
-      ctx.lineWidth = Math.max(1.4, sw * 0.65);
-      ctx.beginPath();
-      ctx.moveTo(o.cx, o.cy); ctx.lineTo(o.x1, o.y1);
-      ctx.moveTo(o.cx, o.cy); ctx.lineTo(o.x2, o.y2);
-      ctx.stroke();
-
-      let diff = ((a2 - a1) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2);
-      let anticlockwise = false;
-      if (!o.useReflex && diff > Math.PI) {
-        diff = Math.PI * 2 - diff;
-        anticlockwise = true;
-      } else if (o.useReflex && diff < Math.PI) {
-        diff = Math.PI * 2 - diff;
-        anticlockwise = true;
-      }
-
-      ctx.lineWidth = sw;
-      ctx.beginPath();
-      ctx.arc(o.cx, o.cy, r, a1, a2, anticlockwise);
-      ctx.stroke();
-
-      const midAng = anticlockwise ? (a1 - diff / 2) : (a1 + diff / 2);
-      const degVal = Math.round((diff * 180 / Math.PI) * 10) / 10;
-      const labelStr = (o.text && o.text.trim()) ? o.text.trim() : `${degVal}°`;
-      const lx = o.cx + Math.cos(midAng) * (r + 22) + (Number(o.labelOffsetX) || 0);
-      const ly = o.cy + Math.sin(midAng) * (r + 22) + (Number(o.labelOffsetY) || 0);
-
-      ctx.font = 'bold 17px sans-serif';
-      const tw = ctx.measureText(labelStr).width;
-      ctx.fillStyle = 'rgba(255,255,255,0.92)';
-      ctx.fillRect(lx - tw / 2 - 4, ly - 11, tw + 8, 20);
-      ctx.fillStyle = col;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(labelStr, lx, ly);
-
-      if (isSelected && !forExport) {
-        const drawH = (hx, hy, hc) => {
-          ctx.fillStyle = hc;
-          ctx.beginPath(); ctx.arc(hx, hy, 6, 0, Math.PI * 2); ctx.fill();
-          ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
-        };
-        drawH(o.cx, o.cy, '#2563eb');
-        drawH(o.x1, o.y1, '#06b6d4');
-        drawH(o.x2, o.y2, '#dc2626');
-        drawH(o.cx + Math.cos(midAng) * r, o.cy + Math.sin(midAng) * r, '#f59e0b');
-      }
-      ctx.restore();
-    }
-
-    function drawRadiusDimension(ctx, o, isSelected, forExport) {
-      const col = o.color || '#0d9488';
-      const sw = o.strokeWidth || 2.5;
-      const rPx = Math.hypot(o.x2 - o.x1, o.y2 - o.y1);
-      const ang = Math.atan2(o.y2 - o.y1, o.x2 - o.x1);
-      const isDia = o.dimKind === 'diameter';
-      const mmVal = Math.round(rPx * (state.mmPerPx || 5.0) * (isDia ? 2 : 1));
-      const labelStr = (o.text && o.text.trim()) ? o.text.trim() : `${isDia ? '⌀' : 'R'}${mmVal.toLocaleString()}`;
-
-      const startX = isDia ? (o.x1 - Math.cos(ang) * rPx) : o.x1;
-      const startY = isDia ? (o.y1 - Math.sin(ang) * rPx) : o.y1;
-      const trimmed = getTrimmedSegmentPoints(startX, startY, o.x2, o.y2, isDia ? 'filled' : 'dot', 'filled', sw);
-      drawStyledSegment(ctx, trimmed.x1, trimmed.y1, trimmed.x2, trimmed.y2, col, sw, 'solid', 'none');
-      drawArrowMarker(ctx, isDia ? 'filled' : 'dot', startX, startY, ang + Math.PI, col, sw);
-      drawArrowMarker(ctx, 'filled', o.x2, o.y2, ang, col, sw);
-
-      const dir = Math.cos(ang) >= 0 ? 1 : -1;
-      const shelfX = o.x2 + dir * 65;
-      ctx.save();
-      ctx.strokeStyle = col;
-      ctx.lineWidth = sw;
-      ctx.beginPath(); ctx.moveTo(o.x2, o.y2); ctx.lineTo(shelfX, o.y2); ctx.stroke();
-      ctx.font = 'bold 17px sans-serif';
-      ctx.fillStyle = col;
-      ctx.textAlign = dir > 0 ? 'left' : 'right';
-      ctx.fillText(labelStr, o.x2 + dir * 6, o.y2 - 6);
-      ctx.restore();
-    }
-
-    function drawBreakLine(ctx, x1, y1, x2, y2, color, sw) {
-      const dx = x2 - x1;
-      const dy = y2 - y1;
-      const len = Math.hypot(dx, dy) || 1;
-      const ux = dx / len;
-      const uy = dy / len;
-      const nx = -uy;
-      const ny = ux;
-      const midX = (x1 + x2) / 2;
-      const midY = (y1 + y2) / 2;
-      const z = Math.min(18, len * 0.25);
-
-      ctx.save();
-      ctx.strokeStyle = color;
-      ctx.lineWidth = sw;
-      ctx.beginPath();
-      ctx.moveTo(x1, y1);
-      ctx.lineTo(midX - ux * z, midY - uy * z);
-      ctx.lineTo(midX - ux * (z * 0.4) + nx * z, midY - uy * (z * 0.4) + ny * z);
-      ctx.lineTo(midX + ux * (z * 0.4) - nx * z, midY + uy * (z * 0.4) - ny * z);
-      ctx.lineTo(midX + ux * z, midY + uy * z);
-      ctx.lineTo(x2, y2);
-      ctx.stroke();
-      ctx.restore();
-    }
-
-    function drawCameraSymbol(ctx, o) {
-      const col = o.color || '#0284c7';
-      const ang = Math.atan2(o.y2 - o.y1, o.x2 - o.x1);
-      const dist = Math.max(40, Math.min(140, Math.hypot(o.x2 - o.x1, o.y2 - o.y1)));
-      ctx.save();
-      ctx.translate(o.x1, o.y1);
-      ctx.rotate(ang);
-      ctx.fillStyle = hexToRgba(col, 0.22);
-      ctx.beginPath();
-      ctx.moveTo(0, 0);
-      ctx.arc(0, 0, dist, -0.45, 0.45);
-      ctx.closePath();
-      ctx.fill();
-      ctx.fillStyle = col;
-      ctx.fillRect(-12, -9, 20, 18);
-      ctx.beginPath(); ctx.moveTo(8, -5); ctx.lineTo(16, -9); ctx.lineTo(16, 9); ctx.lineTo(8, 5); ctx.closePath(); ctx.fill();
-      ctx.restore();
-      if (o.text) {
-        ctx.save();
-        ctx.font = 'bold 16px sans-serif';
-        ctx.fillStyle = col;
-        ctx.fillText(o.text, o.x1 - 16, o.y1 - 14);
-        ctx.restore();
-      }
-    }
-
-    function drawSlopeSymbol(ctx, o) {
+    function drawTextWithBox(ctx, o) {
       const col = o.color || '#dc2626';
-      const sw = o.strokeWidth || 3;
-      const mx = (o.x1 + o.x2) / 2;
-      const my = (o.y1 + o.y2) / 2;
-      drawStyledSegment(ctx, o.x1, o.y1, o.x2, o.y2, col, sw, 'solid', 'none');
-      drawArrowMarker(ctx, 'filled', o.x2, o.y2, Math.atan2(o.y2 - o.y1, o.x2 - o.x1), col, sw);
-      ctx.save();
-      ctx.font = 'bold 18px sans-serif';
-      ctx.fillStyle = col;
-      ctx.textAlign = 'center';
-      ctx.fillText(o.text || '1/100', mx, my - 10);
-      ctx.restore();
-    }
-
-    function drawLevelSymbol(ctx, o) {
-      const col = o.color || '#059669';
-      const x = o.x || 120;
-      const y = o.y || 120;
-      ctx.save();
-      ctx.strokeStyle = col;
-      ctx.fillStyle = col;
-      ctx.lineWidth = 2.5;
-      ctx.beginPath();
-      ctx.moveTo(x - 10, y - 16);
-      ctx.lineTo(x + 10, y - 16);
-      ctx.lineTo(x, y);
-      ctx.closePath();
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.moveTo(x - 16, y);
-      ctx.lineTo(x + 95, y);
-      ctx.stroke();
-      ctx.font = 'bold 17px sans-serif';
-      ctx.fillText(o.text || 'GL±0', x + 14, y - 6);
-      ctx.restore();
-    }
-
-    function drawCompassSymbol(ctx, o) {
-      const col = o.color || '#0f172a';
-      const ang = Math.atan2(o.y2 - o.y1, o.x2 - o.x1) + Math.PI / 2;
-      ctx.save();
-      ctx.translate(o.x1, o.y1);
-      ctx.rotate(ang);
-      ctx.strokeStyle = col;
-      ctx.fillStyle = col;
-      ctx.lineWidth = 2.5;
-      ctx.beginPath(); ctx.arc(0, 0, 22, 0, Math.PI * 2); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(0, -26); ctx.lineTo(-7, 6); ctx.lineTo(0, 0); ctx.closePath(); ctx.fill();
-      ctx.beginPath(); ctx.moveTo(0, -26); ctx.lineTo(7, 6); ctx.lineTo(0, 0); ctx.closePath(); ctx.stroke();
-      ctx.font = 'bold 14px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('N', 0, -30);
-      ctx.restore();
-    }
-
-    function drawTextObject(ctx, o) {
-      const col = o.color || '#dc2626';
-      const fSize = Number(o.fontSize) || 24;
-      const txt = String(o.text || 'メモ');
-      const boxStyle = o.textBoxStyle || 'none';
-      ctx.save();
-      ctx.font = `bold ${fSize}px sans-serif`;
-      const tw = Math.max(28, ctx.measureText(txt).width);
-      const padX = boxStyle === 'pill' ? 16 : 10;
+      const fs = Number(o.fontSize) || 24;
+      const boxSt = o.textBoxStyle || 'none';
+      const txt = String(o.text || '');
+      ctx.font = `bold ${fs}px sans-serif`;
+      const tw = Math.max(30, ctx.measureText(txt).width);
+      const padX = 12;
       const padY = 6;
       const bx = o.x - padX;
-      const by = o.y - fSize - padY + 4;
+      const by = o.y - fs - padY + 3;
       const bw = tw + padX * 2;
-      const bh = fSize + padY * 2;
+      const bh = fs + padY * 2;
 
-      if (boxStyle === 'none') {
+      ctx.save();
+      ctx.strokeStyle = col;
+      ctx.lineWidth = 2.2;
+      if (boxSt === 'solid') {
+        ctx.fillStyle = 'rgba(255,255,255,0.95)';
+        ctx.fillRect(bx, by, bw, bh);
+        ctx.strokeRect(bx, by, bw, bh);
+      } else if (boxSt === 'double') {
+        ctx.fillStyle = 'rgba(255,255,255,0.95)';
+        ctx.fillRect(bx, by, bw, bh);
+        ctx.strokeRect(bx, by, bw, bh);
+        ctx.strokeRect(bx + 4, by + 4, bw - 8, bh - 8);
+      } else if (boxSt === 'dashed' || boxSt === 'dotted') {
+        ctx.fillStyle = 'rgba(255,255,255,0.95)';
+        ctx.fillRect(bx, by, bw, bh);
+        ctx.setLineDash(boxSt === 'dotted' ? [2, 4] : [6, 4]);
+        ctx.strokeRect(bx, by, bw, bh);
+        ctx.setLineDash([]);
+      } else if (boxSt === 'pill' || boxSt === 'cloud' || boxSt === 'zigzag' || boxSt === 'callout') {
+        ctx.fillStyle = 'rgba(255,255,255,0.96)';
+        ctx.beginPath();
+        if (ctx.roundRect) ctx.roundRect(bx, by, bw, bh, boxSt === 'pill' ? bh / 2 : 10);
+        else ctx.rect(bx, by, bw, bh);
+        ctx.fill();
+        ctx.stroke();
+      } else if (boxSt === 'bracket') {
+        const arm = 10;
+        ctx.beginPath();
+        ctx.moveTo(bx, by + arm); ctx.lineTo(bx, by); ctx.lineTo(bx + arm, by);
+        ctx.moveTo(bx + bw - arm, by); ctx.lineTo(bx + bw, by); ctx.lineTo(bx + bw, by + arm);
+        ctx.moveTo(bx + bw, by + bh - arm); ctx.lineTo(bx + bw, by + bh); ctx.lineTo(bx + bw - arm, by + bh);
+        ctx.moveTo(bx + arm, by + bh); ctx.lineTo(bx, by + bh); ctx.lineTo(bx, by + bh - arm);
+        ctx.stroke();
+      } else if (boxSt === 'badge') {
+        ctx.fillStyle = col;
+        ctx.fillRect(bx, by, bw, bh);
+      }
+
+      if (boxSt === 'none') {
         ctx.lineWidth = 4;
         ctx.strokeStyle = 'rgba(255,255,255,0.92)';
         ctx.strokeText(txt, o.x, o.y);
-        ctx.fillStyle = col;
-        ctx.fillText(txt, o.x, o.y);
-      } else if (boxStyle === 'badge') {
-        ctx.fillStyle = col;
-        ctx.fillRect(bx, by, bw, bh);
-        ctx.fillStyle = '#ffffff';
-        ctx.fillText(txt, o.x, o.y);
-      } else {
-        ctx.fillStyle = 'rgba(255,255,255,0.96)';
-        ctx.strokeStyle = col;
-        ctx.lineWidth = 2.2;
-        if (boxStyle === 'dashed') ctx.setLineDash([6, 4]);
-        else if (boxStyle === 'dotted') ctx.setLineDash([2, 4]);
-        if (boxStyle === 'cloud') {
-          buildCloudPath(ctx, bx, by, bw, bh);
-          ctx.fill();
-          ctx.stroke();
-        } else if (boxStyle === 'pill') {
-          ctx.beginPath();
-          if (ctx.roundRect) ctx.roundRect(bx, by, bw, bh, bh / 2);
-          else ctx.rect(bx, by, bw, bh);
-          ctx.fill();
-          ctx.stroke();
-        } else if (boxStyle === 'callout') {
-          ctx.beginPath();
-          ctx.moveTo(bx, by); ctx.lineTo(bx + bw, by); ctx.lineTo(bx + bw, by + bh);
-          ctx.lineTo(bx + 26, by + bh); ctx.lineTo(bx + 16, by + bh + 10); ctx.lineTo(bx + 12, by + bh);
-          ctx.lineTo(bx, by + bh); ctx.closePath();
-          ctx.fill(); ctx.stroke();
-        } else if (boxStyle === 'bracket') {
-          ctx.fillRect(bx, by, bw, bh);
-          const arm = 10;
-          ctx.beginPath();
-          ctx.moveTo(bx, by + arm); ctx.lineTo(bx, by); ctx.lineTo(bx + arm, by);
-          ctx.moveTo(bx + bw - arm, by); ctx.lineTo(bx + bw, by); ctx.lineTo(bx + bw, by + arm);
-          ctx.moveTo(bx + bw, by + bh - arm); ctx.lineTo(bx + bw, by + bh); ctx.lineTo(bx + bw - arm, by + bh);
-          ctx.moveTo(bx + arm, by + bh); ctx.lineTo(bx, by + bh); ctx.lineTo(bx, by + bh - arm);
-          ctx.stroke();
-        } else {
-          ctx.fillRect(bx, by, bw, bh);
-          ctx.strokeRect(bx, by, bw, bh);
-          if (boxStyle === 'double') {
-            ctx.strokeRect(bx + 3.5, by + 3.5, Math.max(2, bw - 7), Math.max(2, bh - 7));
-          }
-        }
-        ctx.setLineDash([]);
-        ctx.fillStyle = col;
-        ctx.fillText(txt, o.x, o.y);
       }
+      ctx.fillStyle = boxSt === 'badge' ? '#ffffff' : col;
+      ctx.fillText(txt, o.x, o.y);
       ctx.restore();
     }
 
-    function drawTableObject(ctx, o, isSelected, forExport) {
-      const fSize = Number(o.fontSize) || 15;
-      let curY = o.y;
-      ctx.save();
-      o.cells.forEach((row, r) => {
-        let curX = o.x;
-        const rh = o.rowHeights[r] || 36;
-        row.forEach((cell, c) => {
-          const cw = o.colWidths[c] || 96;
-          ctx.fillStyle = cell.bg || (r === 0 ? '#f1f5f9' : '#ffffff');
-          ctx.fillRect(curX, curY, cw, rh);
-          ctx.strokeStyle = o.borderColor || '#0f172a';
-          ctx.lineWidth = 1.6;
-          ctx.strokeRect(curX, curY, cw, rh);
-
-          if (cell.diag === 'tl-br') {
-            ctx.beginPath(); ctx.moveTo(curX, curY); ctx.lineTo(curX + cw, curY + rh); ctx.stroke();
-          } else if (cell.diag === 'bl-tr') {
-            ctx.beginPath(); ctx.moveTo(curX, curY + rh); ctx.lineTo(curX + cw, curY); ctx.stroke();
-          }
-
-          if (isSelected && !forExport && r === state.tableSelRow && c === state.tableSelCol) {
-            ctx.strokeStyle = '#0284c7';
-            ctx.lineWidth = 3;
-            ctx.strokeRect(curX + 1.5, curY + 1.5, cw - 3, rh - 3);
-          }
-
-          if (cell.text) {
-            ctx.fillStyle = cell.color || '#0f172a';
-            ctx.font = `${cell.bold ? 'bold ' : ''}${fSize}px sans-serif`;
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(String(cell.text), curX + cw / 2, curY + rh / 2);
-          }
-          curX += cw;
-        });
-        curY += rh;
-      });
-      ctx.restore();
-    }
-
-    // ==================== メインキャンバス描画 ====================
-    function renderCanvas(forExport = false) {
+    function renderCanvas(cleanExport = false) {
       const canvas = document.getElementById('mamezu-canvas');
       if (!canvas) return;
       const ctx = canvas.getContext('2d');
@@ -2901,24 +2398,21 @@
       const H = canvas.height;
       ctx.clearRect(0, 0, W, H);
 
-      // 1. 用紙背景描画
+      // 1. 用紙背景（Back）
       if (state.bgType === 'tint') {
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(0, 0, W, H);
-        ctx.fillStyle = hexToRgba(state.bgTintColor || '#fef9c3', (state.bgAlpha ?? 35) / 100);
+        ctx.fillStyle = hexToRgba(state.bgTintColor, (state.bgAlpha ?? 35) / 100);
         ctx.fillRect(0, 0, W, H);
       } else {
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(0, 0, W, H);
       }
-
       if (state.bgType === 'grid') {
         ctx.strokeStyle = 'rgba(16, 185, 129, 0.22)';
         ctx.lineWidth = 1;
         for (let x = 0; x <= W; x += 28) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
         for (let y = 0; y <= H; y += 28) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
       } else if (state.bgType === 'dots') {
-        ctx.fillStyle = 'rgba(71, 85, 105, 0.42)';
+        ctx.fillStyle = 'rgba(71, 85, 105, 0.40)';
         for (let x = 14; x < W; x += 28) {
           for (let y = 14; y < H; y += 28) {
             ctx.beginPath(); ctx.arc(x, y, 1.5, 0, Math.PI * 2); ctx.fill();
@@ -2926,25 +2420,21 @@
         }
       }
 
-      const selSet = getSelectedIndicesSet();
       const list = state.currentObj ? [...state.objects, state.currentObj] : state.objects;
+      const selSet = getSelectedIndicesSet();
 
       list.forEach((o, idx) => {
-        const isCurrentDrawing = !!state.currentObj && idx === list.length - 1;
-        const isSel = !isCurrentDrawing && selSet.has(idx);
         const col = o.color || '#dc2626';
         const sw = o.strokeWidth || 3.5;
-        const ls = o.lineStyle || 'solid';
-        const dp = o.dashPattern || 'none';
-
         ctx.save();
-        ctx.globalAlpha = Math.max(0.1, Math.min(1, (typeof o.opacity === 'number' ? o.opacity : 100) / 100));
+        ctx.globalAlpha = (o.opacity ?? 100) / 100;
+        ctx.strokeStyle = col;
+        ctx.fillStyle = col;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
 
         if (o.type === 'pen' && Array.isArray(o.points)) {
-          ctx.strokeStyle = col;
           ctx.lineWidth = sw;
-          ctx.lineCap = 'round';
-          ctx.lineJoin = 'round';
           ctx.beginPath();
           o.points.forEach((p, i) => (i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y)));
           ctx.stroke();
@@ -2957,95 +2447,136 @@
             ctx.fill();
           }
           for (let i = 0; i < o.points.length - 1; i++) {
-            const p1 = o.points[i];
-            const p2 = o.points[i + 1];
-            const a1 = i === 0 ? (o.arrowStart || 'none') : 'none';
-            const a2 = (!o.closed && i === o.points.length - 2) ? (o.arrowEnd || 'none') : 'none';
-            const tr = getTrimmedSegmentPoints(p1.x, p1.y, p2.x, p2.y, a1, a2, sw);
-            drawStyledSegment(ctx, tr.x1, tr.y1, tr.x2, tr.y2, col, sw, ls, dp);
-            if (a1 !== 'none') drawArrowMarker(ctx, a1, p1.x, p1.y, Math.atan2(p1.y - p2.y, p1.x - p2.x), col, sw);
-            if (a2 !== 'none') drawArrowMarker(ctx, a2, p2.x, p2.y, Math.atan2(p2.y - p1.y, p2.x - p1.x), col, sw);
+            drawStyledSegment(ctx, o.points[i].x, o.points[i].y, o.points[i + 1].x, o.points[i + 1].y, o);
           }
           if (o.closed && o.points.length >= 3) {
             const last = o.points[o.points.length - 1];
-            drawStyledSegment(ctx, last.x, last.y, o.points[0].x, o.points[0].y, col, sw, ls, dp);
+            drawStyledSegment(ctx, last.x, last.y, o.points[0].x, o.points[0].y, o);
+          } else if (o.points.length >= 2) {
+            const p0 = o.points[0], p1 = o.points[1];
+            const pn1 = o.points[o.points.length - 2], pn = o.points[o.points.length - 1];
+            drawArrowMarker(ctx, o.arrowStart, p0.x, p0.y, Math.atan2(p0.y - p1.y, p0.x - p1.x), col, sw);
+            drawArrowMarker(ctx, o.arrowEnd, pn.x, pn.y, Math.atan2(pn.y - pn1.y, pn.x - pn1.x), col, sw);
           }
         } else if (o.type === 'line' || o.type === 'arrow') {
-          const a1 = o.arrowStart || 'none';
-          const a2 = o.arrowEnd || (o.type === 'arrow' ? 'filled' : 'none');
-          const tr = getTrimmedSegmentPoints(o.x1, o.y1, o.x2, o.y2, a1, a2, sw);
-          drawStyledSegment(ctx, tr.x1, tr.y1, tr.x2, tr.y2, col, sw, ls, dp);
           const ang = Math.atan2(o.y2 - o.y1, o.x2 - o.x1);
-          drawArrowMarker(ctx, a1, o.x1, o.y1, ang + Math.PI, col, sw);
-          drawArrowMarker(ctx, a2, o.x2, o.y2, ang, col, sw);
+          const len = Math.hypot(o.x2 - o.x1, o.y2 - o.y1);
+          const trim1 = Math.min(len * 0.4, getArrowTrimOffset(o.arrowStart, sw));
+          const trim2 = Math.min(len * 0.4, getArrowTrimOffset(o.arrowEnd, sw));
+          drawStyledSegment(ctx, o.x1 + Math.cos(ang) * trim1, o.y1 + Math.sin(ang) * trim1, o.x2 - Math.cos(ang) * trim2, o.y2 - Math.sin(ang) * trim2, o);
+          drawArrowMarker(ctx, o.arrowStart, o.x1, o.y1, ang + Math.PI, col, sw);
+          drawArrowMarker(ctx, o.arrowEnd, o.x2, o.y2, ang, col, sw);
         } else if (o.type === 'parallel') {
           const gap = Number(o.gap) || 22;
           const ang = Math.atan2(o.y2 - o.y1, o.x2 - o.x1);
           const nx = -Math.sin(ang) * (gap / 2);
           const ny = Math.cos(ang) * (gap / 2);
-          drawStyledSegment(ctx, o.x1 + nx, o.y1 + ny, o.x2 + nx, o.y2 + ny, col, sw, ls, dp);
-          drawStyledSegment(ctx, o.x1 - nx, o.y1 - ny, o.x2 - nx, o.y2 - ny, col, sw, ls, dp);
+          drawStyledSegment(ctx, o.x1 + nx, o.y1 + ny, o.x2 + nx, o.y2 + ny, o);
+          drawStyledSegment(ctx, o.x1 - nx, o.y1 - ny, o.x2 - nx, o.y2 - ny, o);
         } else if (o.type === 'leader') {
           const dir = o.x2 >= o.x1 ? 1 : -1;
-          const fSize = Number(o.fontSize) || 21;
-          const txt = String(o.text || '確認箇所');
-          ctx.font = `bold ${fSize}px sans-serif`;
+          const fs = Number(o.fontSize) || 21;
+          ctx.font = `bold ${fs}px sans-serif`;
+          const txt = o.text || '確認箇所';
           const shelfW = Math.max(70, ctx.measureText(txt).width + 20);
           const x3 = o.x2 + dir * shelfW;
-          const a1 = o.arrowStart || 'filled';
-          const a2 = o.arrowEnd || 'none';
-          const tr1 = getTrimmedSegmentPoints(o.x1, o.y1, o.x2, o.y2, a1, 'none', sw);
-          const tr2 = getTrimmedSegmentPoints(o.x2, o.y2, x3, o.y2, 'none', a2, sw);
-          drawStyledSegment(ctx, tr1.x1, tr1.y1, tr1.x2, tr1.y2, col, sw, ls, dp);
-          drawStyledSegment(ctx, tr2.x1, tr2.y1, tr2.x2, tr2.y2, col, sw, ls, dp);
-          drawArrowMarker(ctx, a1, o.x1, o.y1, Math.atan2(o.y2 - o.y1, o.x2 - o.x1) + Math.PI, col, sw);
-          drawArrowMarker(ctx, a2, x3, o.y2, dir > 0 ? 0 : Math.PI, col, sw);
+          const ang = Math.atan2(o.y2 - o.y1, o.x2 - o.x1);
+          const len = Math.hypot(o.x2 - o.x1, o.y2 - o.y1);
+          const trim1 = Math.min(len * 0.4, getArrowTrimOffset(o.arrowStart, sw));
+          const trim2 = Math.min(shelfW * 0.4, getArrowTrimOffset(o.arrowEnd, sw));
+          drawStyledSegment(ctx, o.x1 + Math.cos(ang) * trim1, o.y1 + Math.sin(ang) * trim1, o.x2, o.y2, o);
+          drawStyledSegment(ctx, o.x2, o.y2, x3 - dir * trim2, o.y2, o);
+          drawArrowMarker(ctx, o.arrowStart, o.x1, o.y1, ang + Math.PI, col, sw);
+          drawArrowMarker(ctx, o.arrowEnd, x3, o.y2, dir > 0 ? 0 : Math.PI, col, sw);
+          ctx.fillStyle = 'rgba(255,255,255,0.92)';
+          ctx.fillRect(dir > 0 ? o.x2 + 2 : x3, o.y2 - fs - 7, shelfW - 4, fs + 5);
           ctx.fillStyle = o.textColor || col;
           ctx.textAlign = dir > 0 ? 'left' : 'right';
           ctx.fillText(txt, o.x2 + dir * 6, o.y2 - 7);
+          ctx.textAlign = 'left';
         } else if (o.type === 'dimension') {
-          drawDimensionLine(ctx, o, isSel, forExport);
-        } else if (o.type === 'angle_dim') {
-          drawAngleDimension(ctx, o, isSel, forExport);
-        } else if (o.type === 'radius_dim') {
-          drawRadiusDimension(ctx, o, isSel, forExport);
-        } else if (o.type === 'breakline') {
-          drawBreakLine(ctx, o.x1, o.y1, o.x2, o.y2, col, sw);
-        } else if (o.type === 'camera') {
-          drawCameraSymbol(ctx, o);
-        } else if (o.type === 'slope') {
-          drawSlopeSymbol(ctx, o);
-        } else if (o.type === 'level') {
-          drawLevelSymbol(ctx, o);
-        } else if (o.type === 'compass') {
-          drawCompassSymbol(ctx, o);
-        } else if (o.type === 'balloon') {
-          const r = 20;
-          ctx.fillStyle = '#ffffff';
-          ctx.strokeStyle = col;
-          ctx.lineWidth = 3;
-          ctx.beginPath(); ctx.arc(o.x, o.y, r, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+          const ang = Math.atan2(o.y2 - o.y1, o.x2 - o.x1);
+          const nx = -Math.sin(ang);
+          const ny = Math.cos(ang);
+          const off = Number(o.dimOffset) || 0;
+          const p1x = o.x1 + nx * off, p1y = o.y1 + ny * off;
+          const p2x = o.x2 + nx * off, p2y = o.y2 + ny * off;
+          if (Math.abs(off) > 2) {
+            ctx.lineWidth = 1.4;
+            ctx.beginPath();
+            ctx.moveTo(o.x1, o.y1); ctx.lineTo(p1x + nx * Math.sign(off) * 8, p1y + ny * Math.sign(off) * 8);
+            ctx.moveTo(o.x2, o.y2); ctx.lineTo(p2x + nx * Math.sign(off) * 8, p2y + ny * Math.sign(off) * 8);
+            ctx.stroke();
+          }
+          ctx.lineWidth = 2.2;
+          ctx.beginPath(); ctx.moveTo(p1x, p1y); ctx.lineTo(p2x, p2y); ctx.stroke();
+          drawArrowMarker(ctx, 'arch_tick', p1x, p1y, ang, col, 2.5);
+          drawArrowMarker(ctx, 'arch_tick', p2x, p2y, ang, col, 2.5);
+          const pxDist = Math.hypot(o.x2 - o.x1, o.y2 - o.y1);
+          const label = (o.text && o.text.trim()) ? o.text.trim() : `${Math.round(pxDist * state.mmPerPx)}mm`;
+          let lx = (p1x + p2x) / 2 + (Number(o.labelOffsetX) || 0);
+          let ly = (p1y + p2y) / 2 + (Number(o.labelOffsetY) || 0) - 8;
+          if (o.textPos === 'below') ly += 26;
+          ctx.font = 'bold 19px sans-serif';
+          const tw = ctx.measureText(label).width;
+          ctx.fillStyle = 'rgba(255,255,255,0.92)';
+          ctx.fillRect(lx - tw / 2 - 4, ly - 17, tw + 8, 21);
           ctx.fillStyle = col;
-          ctx.font = 'bold 20px sans-serif';
           ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillText(o.text || formatBalloonLabel(o.num || 1, o.balloonStyle), o.x, o.y + 1);
-        } else if (o.type === 'rect' || o.type === 'roundrect') {
-          ctx.strokeStyle = col;
-          ctx.lineWidth = sw;
-          ctx.setLineDash(getResolvedLineDash(ls, dp, sw));
+          ctx.fillText(label, lx, ly);
+          ctx.textAlign = 'left';
+        } else if (o.type === 'angle_dim') {
+          const r = Number(o.arcR) || 68;
+          const a1 = Math.atan2(o.y1 - o.cy, o.x1 - o.cx);
+          const a2 = Math.atan2(o.y2 - o.cy, o.x2 - o.cx);
+          ctx.lineWidth = 2;
           ctx.beginPath();
-          if (o.type === 'roundrect' && ctx.roundRect) ctx.roundRect(o.x, o.y, o.w, o.h, 16);
-          else ctx.rect(o.x, o.y, o.w, o.h);
+          ctx.moveTo(o.cx, o.cy); ctx.lineTo(o.x1, o.y1);
+          ctx.moveTo(o.cx, o.cy); ctx.lineTo(o.x2, o.y2);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.arc(o.cx, o.cy, r, a1, a2, !!o.useReflex);
+          ctx.stroke();
+          let diff = ((a2 - a1) * 180) / Math.PI;
+          while (diff < 0) diff += 360;
+          if (!o.useReflex && diff > 180) diff = 360 - diff;
+          if (o.useReflex && diff < 180) diff = 360 - diff;
+          const midA = (a1 + a2) / 2 + (o.useReflex ? Math.PI : 0);
+          const tx = o.cx + Math.cos(midA) * (r + 18);
+          const ty = o.cy + Math.sin(midA) * (r + 18);
+          ctx.font = 'bold 18px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText(o.text || `${diff.toFixed(1)}°`, tx, ty);
+          ctx.textAlign = 'left';
+        } else if (o.type === 'radius_dim') {
+          const ang = Math.atan2(o.y2 - o.y1, o.x2 - o.x1);
+          const rPx = Math.hypot(o.x2 - o.x1, o.y2 - o.y1);
+          const mmVal = Math.round(rPx * state.mmPerPx * (o.dimKind === 'diameter' ? 2 : 1));
+          const prefix = o.dimKind === 'diameter' ? '⌀' : 'R';
+          const label = (o.text && o.text.trim()) ? o.text.trim() : `${prefix}${mmVal}`;
+          ctx.lineWidth = 2.4;
+          ctx.beginPath(); ctx.moveTo(o.x1, o.y1); ctx.lineTo(o.x2, o.y2); ctx.stroke();
+          drawArrowMarker(ctx, 'filled', o.x2, o.y2, ang, col, 2.5);
+          ctx.font = 'bold 19px sans-serif';
+          ctx.fillText(label, o.x2 + 8, o.y2 - 6);
+        } else if (o.type === 'rect' || o.type === 'roundrect' || o.type === 'cloud') {
+          ctx.lineWidth = sw;
+          ctx.setLineDash(getDashArrayForObject(o, sw));
           if (o.fillTint) {
             ctx.fillStyle = hexToRgba(col, 0.14);
-            ctx.fill();
+            ctx.fillRect(o.x, o.y, o.w, o.h);
+          }
+          ctx.beginPath();
+          if (ctx.roundRect && (o.type === 'roundrect' || o.type === 'cloud')) {
+            ctx.roundRect(o.x, o.y, o.w, o.h, o.type === 'cloud' ? 22 : 14);
+          } else {
+            ctx.rect(o.x, o.y, o.w, o.h);
           }
           ctx.stroke();
+          ctx.setLineDash([]);
         } else if (o.type === 'circle') {
-          ctx.strokeStyle = col;
           ctx.lineWidth = sw;
-          ctx.setLineDash(getResolvedLineDash(ls, dp, sw));
+          ctx.setLineDash(getDashArrayForObject(o, sw));
           ctx.beginPath();
           ctx.ellipse(o.x + o.w / 2, o.y + o.h / 2, Math.abs(o.w) / 2, Math.abs(o.h) / 2, 0, 0, Math.PI * 2);
           if (o.fillTint) {
@@ -3053,177 +2584,228 @@
             ctx.fill();
           }
           ctx.stroke();
-        } else if (o.type === 'cloud') {
-          ctx.strokeStyle = col;
-          ctx.lineWidth = sw;
-          ctx.setLineDash(getResolvedLineDash(ls, dp, sw));
-          buildCloudPath(ctx, o.x, o.y, o.w, o.h);
-          if (o.fillTint) {
-            ctx.fillStyle = hexToRgba(col, 0.14);
-            ctx.fill();
-          }
-          ctx.stroke();
+          ctx.setLineDash([]);
         } else if (o.type === 'hatch') {
-          drawHatchArea(ctx, o.x, o.y, o.w, o.h, o.hatchPattern || 'diag45', col, sw, ls, dp);
+          drawHatchArea(ctx, o);
+        } else if (o.type === 'balloon') {
+          const label = o.text || formatBalloonLabel(o.num || 1, o.balloonStyle);
+          ctx.fillStyle = '#ffffff';
+          ctx.lineWidth = 3;
+          ctx.beginPath(); ctx.arc(o.x, o.y, 20, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+          ctx.fillStyle = col;
+          ctx.font = 'bold 20px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(label, o.x, o.y + 1);
+          ctx.textAlign = 'left';
+          ctx.textBaseline = 'alphabetic';
+        } else if (o.type === 'level') {
+          ctx.lineWidth = 2.5;
+          ctx.beginPath();
+          ctx.moveTo(o.x, o.y); ctx.lineTo(o.x - 10, o.y - 16); ctx.lineTo(o.x + 10, o.y - 16); ctx.closePath();
+          ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(o.x - 14, o.y); ctx.lineTo(o.x + 95, o.y); ctx.stroke();
+          ctx.font = 'bold 18px sans-serif';
+          ctx.fillText(o.text || 'GL±0', o.x + 14, o.y - 5);
+        } else if (o.type === 'slope') {
+          ctx.lineWidth = 2.5;
+          ctx.beginPath();
+          ctx.moveTo(o.x1, o.y1); ctx.lineTo(o.x2, o.y2); ctx.lineTo(o.x2, o.y1); ctx.closePath();
+          ctx.stroke();
+          ctx.font = 'bold 18px sans-serif';
+          ctx.fillText(o.text || '1/100', (o.x1 + o.x2) / 2 - 20, Math.min(o.y1, o.y2) - 8);
+        } else if (o.type === 'breakline') {
+          const mx = (o.x1 + o.x2) / 2, my = (o.y1 + o.y2) / 2;
+          const ang = Math.atan2(o.y2 - o.y1, o.x2 - o.x1);
+          const nx = -Math.sin(ang) * 12, ny = Math.cos(ang) * 12;
+          const ux = Math.cos(ang) * 8, uy = Math.sin(ang) * 8;
+          ctx.lineWidth = sw;
+          ctx.beginPath();
+          ctx.moveTo(o.x1, o.y1);
+          ctx.lineTo(mx - ux, my - uy);
+          ctx.lineTo(mx - ux * 0.3 + nx, my - uy * 0.3 + ny);
+          ctx.lineTo(mx + ux * 0.3 - nx, my + uy * 0.3 - ny);
+          ctx.lineTo(mx + ux, my + uy);
+          ctx.lineTo(o.x2, o.y2);
+          ctx.stroke();
+        } else if (o.type === 'camera') {
+          const ang = Math.atan2(o.y2 - o.y1, o.x2 - o.x1);
+          const r = Math.max(40, Math.hypot(o.x2 - o.x1, o.y2 - o.y1));
+          ctx.fillStyle = hexToRgba(col, 0.16);
+          ctx.beginPath();
+          ctx.moveTo(o.x1, o.y1);
+          ctx.arc(o.x1, o.y1, r, ang - 0.42, ang + 0.42);
+          ctx.closePath();
+          ctx.fill();
+          ctx.beginPath(); ctx.arc(o.x1, o.y1, 10, 0, Math.PI * 2); ctx.fillStyle = col; ctx.fill();
+        } else if (o.type === 'compass') {
+          const ang = Math.atan2(o.y2 - o.y1, o.x2 - o.x1);
+          ctx.lineWidth = 2.5;
+          ctx.beginPath(); ctx.arc(o.x1, o.y1, 22, 0, Math.PI * 2); ctx.stroke();
+          drawArrowMarker(ctx, 'filled', o.x1 + Math.cos(ang) * 28, o.y1 + Math.sin(ang) * 28, ang, col, 2.5);
+          ctx.font = 'bold 16px sans-serif';
+          ctx.fillText('N', o.x1 + Math.cos(ang) * 34 - 6, o.y1 + Math.sin(ang) * 34 + 5);
         } else if (o.type === 'text') {
-          drawTextObject(ctx, o);
+          drawTextWithBox(ctx, o);
         } else if (o.type === 'table') {
-          drawTableObject(ctx, o, isSel, forExport);
-        } else if ((o.type === 'image' || o.type === 'pdf' || o.type === 'dxf') && o.dataUrl) {
+          let cy = o.y;
+          o.rowHeights.forEach((rh, r) => {
+            let cx = o.x;
+            o.colWidths.forEach((cw, c) => {
+              const cell = o.cells?.[r]?.[c] || { text: '', bg: '#ffffff', color: '#0f172a', bold: false, diag: 'none' };
+              ctx.fillStyle = cell.bg || '#ffffff';
+              ctx.fillRect(cx, cy, cw, rh);
+              ctx.strokeStyle = o.borderColor || '#0f172a';
+              ctx.lineWidth = 2;
+              ctx.strokeRect(cx, cy, cw, rh);
+              if (cell.diag === 'tl-br') {
+                ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + cw, cy + rh); ctx.stroke();
+              } else if (cell.diag === 'bl-tr') {
+                ctx.beginPath(); ctx.moveTo(cx, cy + rh); ctx.lineTo(cx + cw, cy); ctx.stroke();
+              }
+              if (cell.text) {
+                ctx.fillStyle = cell.color || '#0f172a';
+                ctx.font = `${cell.bold ? 'bold ' : ''}${o.fontSize || 18}px sans-serif`;
+                ctx.fillText(cell.text, cx + 6, cy + rh / 2 + 6);
+              }
+              cx += cw;
+            });
+            cy += rh;
+          });
+        } else if (['image', 'pdf', 'dxf'].includes(o.type)) {
           if (o._img) {
             ctx.drawImage(o._img, o.x, o.y, o.w, o.h);
-          } else {
+          } else if (o.dataUrl) {
             const im = new Image();
             im.onload = () => { o._img = im; renderCanvas(); };
             im.src = o.dataUrl;
           }
         }
+        ctx.restore();
 
-        // 選択枠・ハンドル描画
-        if (isSel && !forExport) {
+        // 選択枠・操作ハンドル（書き出し時は非表示）
+        if (!cleanExport && !state.currentObj && selSet.has(idx)) {
           const b = getObjectBounds(o);
-          ctx.globalAlpha = 1;
-          ctx.strokeStyle = o.groupId ? '#f59e0b' : '#0284c7';
+          ctx.save();
+          ctx.strokeStyle = idx === state.selectedIndex ? '#2563eb' : '#f59e0b';
           ctx.lineWidth = 1.5;
-          ctx.setLineDash([5, 3]);
-          ctx.strokeRect(b.x - 5, b.y - 5, b.w + 10, b.h + 10);
+          ctx.setLineDash([5, 4]);
+          ctx.strokeRect(b.x - 4, b.y - 4, b.w + 8, b.h + 8);
           ctx.setLineDash([]);
 
-          if (typeof o.x1 === 'number' && typeof o.x2 === 'number') {
-            ctx.fillStyle = '#2563eb';
-            ctx.beginPath(); ctx.arc(o.x1, o.y1, 7, 0, Math.PI * 2); ctx.fill();
-            ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
-            ctx.fillStyle = '#dc2626';
-            ctx.beginPath(); ctx.arc(o.x2, o.y2, 7, 0, Math.PI * 2); ctx.fill();
-            ctx.stroke();
-          } else if (o.type === 'polyline' && Array.isArray(o.points)) {
-            o.points.forEach((pt, pi) => {
-              ctx.fillStyle = pi === 0 ? '#10b981' : '#2563eb';
-              ctx.beginPath(); ctx.arc(pt.x, pt.y, 6, 0, Math.PI * 2); ctx.fill();
-              ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
-            });
-          } else if (['rect', 'roundrect', 'circle', 'cloud', 'hatch', 'image', 'pdf', 'dxf'].includes(o.type)) {
-            [[o.x, o.y], [o.x + o.w, o.y], [o.x, o.y + o.h], [o.x + o.w, o.y + o.h]].forEach(([hx, hy]) => {
-              ctx.fillStyle = '#ffffff';
-              ctx.fillRect(hx - 5, hy - 5, 10, 10);
-              ctx.strokeStyle = '#0284c7';
-              ctx.lineWidth = 2;
-              ctx.strokeRect(hx - 5, hy - 5, 10, 10);
-            });
+          if (idx === state.selectedIndex) {
+            const drawHandle = (hx, hy, fill) => {
+              ctx.fillStyle = fill;
+              ctx.beginPath(); ctx.arc(hx, hy, 6.5, 0, Math.PI * 2); ctx.fill();
+              ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1.5; ctx.stroke();
+            };
+            if (typeof o.x1 === 'number' && typeof o.x2 === 'number') {
+              drawHandle(o.x1, o.y1, '#2563eb');
+              drawHandle(o.x2, o.y2, '#dc2626');
+            }
+            if (o.type === 'dimension') {
+              const ang = Math.atan2(o.y2 - o.y1, o.x2 - o.x1);
+              const nx = -Math.sin(ang), ny = Math.cos(ang);
+              const off = Number(o.dimOffset) || 0;
+              const p1x = o.x1 + nx * off, p1y = o.y1 + ny * off;
+              const p2x = o.x2 + nx * off, p2y = o.y2 + ny * off;
+              drawHandle((p1x + p2x) / 2 + (Number(o.labelOffsetX) || 0), (p1y + p2y) / 2 + (Number(o.labelOffsetY) || 0) - 16, '#10b981');
+              drawHandle((p1x + p2x) / 2, (p1y + p2y) / 2 + 16, '#f59e0b');
+            }
+            if (o.type === 'polyline' && Array.isArray(o.points)) {
+              o.points.forEach(pt => drawHandle(pt.x, pt.y, '#2563eb'));
+            }
+            if (['rect', 'roundrect', 'circle', 'cloud', 'hatch', 'image', 'pdf', 'dxf'].includes(o.type)) {
+              drawHandle(o.x, o.y, '#2563eb');
+              drawHandle(o.x + o.w, o.y, '#2563eb');
+              drawHandle(o.x, o.y + o.h, '#2563eb');
+              drawHandle(o.x + o.w, o.y + o.h, '#2563eb');
+            }
           }
+          ctx.restore();
         }
-        ctx.restore();
       });
 
-      if (!forExport) {
-        // 作図中連続線プレビュー
-        if (state.tool === 'polyline' && state.activePolyline && state.activePolyline.points.length > 0) {
-          const pts = state.activePolyline.points;
-          ctx.save();
-          ctx.strokeStyle = state.color;
-          ctx.lineWidth = state.strokeWidth;
-          ctx.beginPath();
-          pts.forEach((p, i) => (i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y)));
-          if (state.activeSnapPt) ctx.lineTo(state.activeSnapPt.x, state.activeSnapPt.y);
-          ctx.stroke();
-          pts.forEach((p, i) => {
-            ctx.fillStyle = i === 0 ? '#10b981' : '#2563eb';
-            ctx.beginPath(); ctx.arc(p.x, p.y, i === 0 ? 7 : 5, 0, Math.PI * 2); ctx.fill();
-          });
-          ctx.restore();
-        }
+      // 作図中の仮ポリラインプレビュー
+      if (!cleanExport && state.activePolyline && state.activePolyline.points.length > 0) {
+        const pts = state.activePolyline.points;
+        ctx.save();
+        ctx.strokeStyle = state.color;
+        ctx.lineWidth = state.strokeWidth;
+        ctx.beginPath();
+        pts.forEach((p, i) => (i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y)));
+        ctx.stroke();
+        ctx.fillStyle = '#10b981';
+        ctx.beginPath(); ctx.arc(pts[0].x, pts[0].y, 7, 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
+      }
 
-        // トリミング枠描画
-        if (state.cropMode && state.cropBox) {
-          const cb = state.cropBox;
-          ctx.save();
-          ctx.fillStyle = 'rgba(0,0,0,0.45)';
-          ctx.fillRect(0, 0, W, cb.y);
-          ctx.fillRect(0, cb.y + cb.h, W, H - (cb.y + cb.h));
-          ctx.fillRect(0, cb.y, cb.x, cb.h);
-          ctx.fillRect(cb.x + cb.w, cb.y, W - (cb.x + cb.w), cb.h);
-          ctx.strokeStyle = '#f59e0b';
-          ctx.lineWidth = 2.5;
-          ctx.setLineDash([6, 4]);
-          ctx.strokeRect(cb.x, cb.y, cb.w, cb.h);
-          ctx.setLineDash([]);
-          [[cb.x, cb.y], [cb.x + cb.w, cb.y], [cb.x, cb.y + cb.h], [cb.x + cb.w, cb.y + cb.h]].forEach(([hx, hy]) => {
-            ctx.fillStyle = '#f59e0b';
-            ctx.fillRect(hx - 6, hy - 6, 12, 12);
-          });
-          ctx.restore();
-        }
+      // 範囲囲み選択枠
+      if (!cleanExport && state.marqueeBox) {
+        ctx.save();
+        ctx.strokeStyle = '#38bdf8';
+        ctx.fillStyle = 'rgba(56, 189, 248, 0.12)';
+        ctx.setLineDash([4, 3]);
+        ctx.fillRect(state.marqueeBox.x, state.marqueeBox.y, state.marqueeBox.w, state.marqueeBox.h);
+        ctx.strokeRect(state.marqueeBox.x, state.marqueeBox.y, state.marqueeBox.w, state.marqueeBox.h);
+        ctx.restore();
+      }
 
-        // 範囲選択ラバーバンド描画
-        if (state.marqueeBox) {
-          const mb = state.marqueeBox;
-          ctx.save();
-          ctx.fillStyle = 'rgba(2, 132, 199, 0.12)';
-          ctx.fillRect(mb.x, mb.y, mb.w, mb.h);
-          ctx.strokeStyle = '#0284c7';
-          ctx.lineWidth = 1.5;
-          ctx.setLineDash([4, 3]);
-          ctx.strokeRect(mb.x, mb.y, mb.w, mb.h);
-          ctx.restore();
-        }
+      // トリミング切り抜き枠
+      if (!cleanExport && state.cropMode && state.cropBox) {
+        const cb = state.cropBox;
+        ctx.save();
+        ctx.strokeStyle = '#f59e0b';
+        ctx.lineWidth = 2.5;
+        ctx.setLineDash([6, 4]);
+        ctx.strokeRect(cb.x, cb.y, cb.w, cb.h);
+        ctx.setLineDash([]);
+        ctx.fillStyle = '#f59e0b';
+        [[cb.x, cb.y], [cb.x + cb.w, cb.y], [cb.x, cb.y + cb.h], [cb.x + cb.w, cb.y + cb.h]].forEach(([hx, hy]) => {
+          ctx.fillRect(hx - 6, hy - 6, 12, 12);
+        });
+        ctx.restore();
+      }
 
-        // CADスナップマーカー描画
-        if (state.activeSnapPt) {
-          const sp = state.activeSnapPt;
-          const colorMap = {
-            endpoint: '#10b981',
-            midpoint: '#38bdf8',
-            center: '#f59e0b',
-            intersection: '#f43f5e',
-            perpendicular: '#c084fc',
-            grid: '#eab308'
-          };
-          const sc = colorMap[sp.kind] || '#10b981';
-          ctx.save();
-          ctx.strokeStyle = sc;
-          ctx.fillStyle = sc;
-          ctx.lineWidth = 2.2;
-          if (sp.kind === 'endpoint') {
-            ctx.strokeRect(sp.x - 6, sp.y - 6, 12, 12);
-          } else if (sp.kind === 'midpoint') {
-            ctx.beginPath(); ctx.moveTo(sp.x, sp.y - 8); ctx.lineTo(sp.x - 7, sp.y + 6); ctx.lineTo(sp.x + 7, sp.y + 6); ctx.closePath(); ctx.stroke();
-          } else if (sp.kind === 'center') {
-            ctx.beginPath(); ctx.arc(sp.x, sp.y, 7, 0, Math.PI * 2); ctx.stroke();
-            ctx.beginPath(); ctx.arc(sp.x, sp.y, 2.5, 0, Math.PI * 2); ctx.fill();
-          } else if (sp.kind === 'intersection') {
-            ctx.beginPath(); ctx.moveTo(sp.x - 6, sp.y - 6); ctx.lineTo(sp.x + 6, sp.y + 6); ctx.moveTo(sp.x + 6, sp.y - 6); ctx.lineTo(sp.x - 6, sp.y + 6); ctx.stroke();
-          } else {
-            ctx.beginPath(); ctx.moveTo(sp.x - 7, sp.y); ctx.lineTo(sp.x + 7, sp.y); ctx.moveTo(sp.x, sp.y - 7); ctx.lineTo(sp.x, sp.y + 7); ctx.stroke();
-          }
-          ctx.font = 'bold 11px sans-serif';
-          ctx.fillText(sp.label || '', sp.x + 9, sp.y - 8);
-          ctx.restore();
-        }
+      // CADスナップマーカー表示
+      if (!cleanExport && state.activeSnapPt) {
+        const sp = state.activeSnapPt;
+        ctx.save();
+        ctx.strokeStyle = '#10b981';
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.88)';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(sp.x - 6, sp.y - 6, 12, 12);
+        ctx.fillRect(sp.x + 10, sp.y - 18, 56, 18);
+        ctx.fillStyle = '#6ee7b7';
+        ctx.font = 'bold 11px sans-serif';
+        ctx.fillText(sp.label || 'スナップ', sp.x + 14, sp.y - 5);
+        ctx.restore();
+      }
 
-        // HUD数値表示
-        if (state.hudText) {
-          ctx.save();
-          ctx.fillStyle = 'rgba(15,23,42,0.88)';
-          ctx.fillRect(W - 220, 10, 208, 26);
-          ctx.strokeStyle = '#fbbf24';
-          ctx.strokeRect(W - 220, 10, 208, 26);
-          ctx.fillStyle = '#fde68a';
-          ctx.font = 'bold 12px monospace';
-          ctx.textAlign = 'center';
-          ctx.fillText(state.hudText, W - 116, 27);
-          ctx.restore();
-        }
+      // リアルタイム数値HUD
+      if (!cleanExport && state.hudText) {
+        ctx.save();
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
+        ctx.fillRect(W - 190, 12, 178, 26);
+        ctx.strokeStyle = '#fbbf24';
+        ctx.strokeRect(W - 190, 12, 178, 26);
+        ctx.fillStyle = '#fde68a';
+        ctx.font = 'bold 13px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText(state.hudText, W - 101, 29);
+        ctx.restore();
       }
     }
 
-    // ==================== オブジェクト幾何境界・移動・キャンバスイベント ====================
+    // ==================== オブジェクト境界・移動・キャンバスイベント ====================
     function getObjectBounds(o) {
+      if (!o) return { x: 0, y: 0, w: 20, h: 20 };
       if (o.type === 'pen' && Array.isArray(o.points) && o.points.length > 0) {
         const xs = o.points.map(p => p.x);
         const ys = o.points.map(p => p.y);
         const minX = Math.min(...xs);
         const minY = Math.min(...ys);
-        return { x: minX, y: minY, w: Math.max(16, Math.max(...xs) - minX), h: Math.max(16, Math.max(...ys) - minY) };
+        return { x: minX, y: minY, w: Math.max(20, Math.max(...xs) - minX), h: Math.max(20, Math.max(...ys) - minY) };
       }
       if (o.type === 'polyline' && Array.isArray(o.points) && o.points.length > 0) {
         const xs = o.points.map(p => p.x);
@@ -3256,8 +2838,8 @@
         return { x: o.x - 6, y: o.y - fs, w: w + 12, h: fs + 8 };
       }
       if (o.type === 'table') {
-        const tw = (o.colWidths || [96, 96, 96]).reduce((a, b) => a + b, 0);
-        const th = (o.rowHeights || [36, 36, 36]).reduce((a, b) => a + b, 0);
+        const tw = (o.colWidths || [104, 104, 104]).reduce((a, b) => a + b, 0);
+        const th = (o.rowHeights || [38, 38, 38]).reduce((a, b) => a + b, 0);
         return { x: o.x, y: o.y, w: tw, h: th };
       }
       return {
@@ -3316,7 +2898,6 @@
         state.startY = state.lastY = pt.y;
         state.dragging = true;
 
-        // トリミング枠操作中
         if (state.cropMode && state.cropBox) {
           const cb = state.cropBox;
           const corners = [
@@ -3339,7 +2920,6 @@
           return;
         }
 
-        // 選択モード
         if (state.tool === 'select') {
           if (state.selectedIndex >= 0 && state.objects[state.selectedIndex]) {
             const cur = state.objects[state.selectedIndex];
@@ -3350,8 +2930,8 @@
               const off = Number(cur.dimOffset) || 0;
               const p1x = cur.x1 + nx * off, p1y = cur.y1 + ny * off;
               const p2x = cur.x2 + nx * off, p2y = cur.y2 + ny * off;
-              let lx = (p1x + p2x) / 2 + (Number(cur.labelOffsetX) || 0);
-              let ly = (p1y + p2y) / 2 + (Number(cur.labelOffsetY) || 0) - 16;
+              const lx = (p1x + p2x) / 2 + (Number(cur.labelOffsetX) || 0);
+              const ly = (p1y + p2y) / 2 + (Number(cur.labelOffsetY) || 0) - 16;
               if (Math.hypot(rawPt.x - lx, rawPt.y - ly) <= 14) { state.dragMode = 'dim-label'; return; }
               const ox = (p1x + p2x) / 2, oy = (p1y + p2y) / 2 + 16;
               if (Math.hypot(rawPt.x - ox, rawPt.y - oy) <= 14) { state.dragMode = 'dim-offset'; return; }
@@ -3430,7 +3010,6 @@
           return;
         }
 
-        // 連続線ツール（クリックで頂点追加）
         if (state.tool === 'polyline') {
           state.dragging = false;
           if (!state.activePolyline) {
@@ -3460,7 +3039,6 @@
           return;
         }
 
-        // 角度寸法（3点クリック）
         if (state.tool === 'angle_dim') {
           state.dragging = false;
           state.angleStepPts.push({ x: pt.x, y: pt.y });
@@ -3491,7 +3069,6 @@
           return;
         }
 
-        // ワンクリック配置ツール（テキスト・バルーン・レベル・3×3表）
         if (state.tool === 'text') {
           state.dragging = false;
           const txt = (document.getElementById('inp-label-text')?.value || '').trim() || '確認メモ';
@@ -3558,7 +3135,6 @@
           return;
         }
 
-        // ドラッグ作図開始
         state.dragMode = 'draw';
         const labelTxt = (document.getElementById('inp-label-text')?.value || '').trim();
         if (state.tool === 'pen') {
@@ -3614,8 +3190,6 @@
 
       const onMove = e => {
         const rawPt = getPt(e);
-
-        // 描画開始前のホバースナップ検出
         if (!state.dragging) {
           if (state.tool !== 'select') {
             snapPointToGeometry(rawPt);
@@ -3778,7 +3352,7 @@
       canvas.addEventListener('mousedown', onDown);
       canvas.addEventListener('mousemove', onMove);
       window.addEventListener('mouseup', onUp);
-      canvas.addEventListener('dblclick', e => {
+      canvas.addEventListener('dblclick', () => {
         if (state.tool === 'polyline' && state.activePolyline) {
           finishActivePolyline(false);
           return;
@@ -4004,7 +3578,6 @@
       if (Array.isArray(window.MAMEZU_PRESETS_100) && window.MAMEZU_PRESETS_100.length > 0) {
         return window.MAMEZU_PRESETS_100;
       }
-      // フォールバック最小セット
       return [
         { key: 'blank', cat: 'struct', name: '⬜ 01. 白紙クリア', desc: 'キャンバスを真っ白にリセット' },
         { key: 'plan', cat: 'struct', name: '➕ 02. 通り芯平面図', desc: 'X/Y通り芯と躯体矩形ベース' },
@@ -4257,7 +3830,7 @@
           const tag = o.closed ? 'polygon' : 'polyline';
           return `<${tag} points="${o.points.map(p => `${p.x},${p.y}`).join(' ')}" fill="none" stroke="${col}" stroke-width="${sw}"/>`;
         }
-        if (o.type === 'line' || o.type === 'arrow' || o.type === 'dimension' || o.type === 'radius_dim' || o.type === 'breakline' || o.type === 'slope') {
+        if (['line', 'arrow', 'dimension', 'radius_dim', 'breakline', 'slope'].includes(o.type)) {
           return `<line x1="${o.x1}" y1="${o.y1}" x2="${o.x2}" y2="${o.y2}" stroke="${col}" stroke-width="${sw}"/>`;
         }
         if (o.type === 'parallel') {
@@ -4272,7 +3845,7 @@
           const x3 = o.x2 + dir * 110;
           return `<polyline points="${o.x1},${o.y1} ${o.x2},${o.y2} ${x3},${o.y2}" fill="none" stroke="${col}" stroke-width="${sw}"/><text x="${o.x2 + dir * 6}" y="${o.y2 - 7}" font-size="${o.fontSize || 21}" font-weight="bold" fill="${o.textColor || col}">${escapeHtml(o.text || '')}</text>`;
         }
-        if (o.type === 'rect' || o.type === 'roundrect' || o.type === 'cloud' || o.type === 'hatch') {
+        if (['rect', 'roundrect', 'cloud', 'hatch'].includes(o.type)) {
           return `<rect x="${o.x}" y="${o.y}" width="${o.w}" height="${o.h}" rx="${o.type === 'roundrect' ? 16 : 0}" fill="none" stroke="${col}" stroke-width="${sw}"/>`;
         }
         if (o.type === 'circle') {
@@ -4464,7 +4037,6 @@
         if (raw) {
           Object.assign(cloudCfg, JSON.parse(raw));
         } else {
-          // 写真台帳・野帳保存済み設定があれば自動引継ぎ
           const lRaw = localStorage.getItem('genba_cloud_sync_config_v1') || localStorage.getItem('genba_fieldnote_cloud_sync_v1');
           if (lRaw) {
             const p = JSON.parse(lRaw);
@@ -4595,7 +4167,6 @@
         const pngDataUrl = canvas.toDataURL('image/png');
         renderCanvas(false);
 
-        // ローカルブリッジへ保存（同一端末の台帳・野帳から即時読込可）
         const bridgeList = JSON.parse(localStorage.getItem(STORAGE_KEY_BRIDGE) || '[]');
         bridgeList.unshift({
           id: 'mz_studio_' + Date.now(),
@@ -4605,7 +4176,6 @@
         });
         localStorage.setItem(STORAGE_KEY_BRIDGE, JSON.stringify(bridgeList.slice(0, 30)));
 
-        // クラウドR2/D1へアップロード
         if (cloudCfg.apiUrl && cloudCfg.siteKey) {
           const pngBlob = await (await fetch(pngDataUrl)).blob();
           const fd = new FormData();
@@ -4621,7 +4191,6 @@
           });
         }
 
-        // Discord送信
         if (alsoDiscord && cloudCfg.discordUrl && navigator.onLine) {
           const pngBlob = await (await fetch(pngDataUrl)).blob();
           const pdfBlob = buildMamezuPdfBlob(0.94);
@@ -4808,10 +4377,9 @@
         return;
       }
 
-      // 未選択・一般図形用2行バー
       box.innerHTML = `
         <div class="flex items-center justify-between gap-1">
-          <span class="font-extrabold text-sky-300 truncate">${sel ? `選択中: ${sel.type}` : `ツール: ${state.tool}`}</span>
+          <span class="font-extrabold text-sky-300 truncate">${sel ? `選択中: ${TOOL_LABELS[sel.type] || sel.type}` : `ツール: ${TOOL_LABELS[state.tool] || state.tool}`}</span>
           <div class="flex items-center gap-1">
             <button onclick="adjustCanvasZoom(-0.15)" class="px-2 py-0.5 bg-[#2b2b30] rounded font-bold">－</button>
             <button onclick="resetCanvasZoom()" class="px-2 py-0.5 bg-[#2b2b30] rounded font-bold text-sky-300">${state.zoomFitMode ? 'フィット' : `${Math.round(state.zoom * 100)}%`}</button>
@@ -4896,7 +4464,6 @@
         return;
       }
 
-      // シングルキーショートカット（V, N, \, P, M, L, T）
       const k = e.key.toLowerCase();
       if (k === 'v') setTool('select');
       else if (k === 'n') setTool('pen');
