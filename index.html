@@ -598,9 +598,12 @@
       <div class="p-4 space-y-3 overflow-y-auto flex-1">
         <!-- 登録済み現場の切り替え -->
         <div class="p-2.5 rounded-xl bg-[#141416] border border-[#2e2e32] space-y-1.5">
-          <div class="flex items-center justify-between">
+          <div class="flex items-center justify-between gap-1">
             <span class="font-extrabold text-cyan-300">🏢 登録済みの現場から選択・切替</span>
-            <button type="button" onclick="removeSelectedSavedSite()" class="px-2 py-0.5 bg-rose-950 hover:bg-rose-800 border border-rose-800 text-rose-200 rounded text-[10px] font-bold cursor-pointer">選択現場をリスト削除</button>
+            <div class="flex items-center gap-1">
+              <button type="button" onclick="syncSitesFromCloudServer(false)" class="px-2 py-0.5 bg-cyan-900 hover:bg-cyan-700 border border-cyan-600 text-cyan-100 rounded text-[10px] font-bold cursor-pointer">🔄 サーバーから取得</button>
+              <button type="button" onclick="removeSelectedSavedSite()" class="px-2 py-0.5 bg-rose-950 hover:bg-rose-800 border border-rose-800 text-rose-200 rounded text-[10px] font-bold cursor-pointer">リスト削除</button>
+            </div>
           </div>
           <select id="sel-cfg-saved-sites" onchange="onSelectSavedSiteInConfig(this.value)" class="w-full bg-[#222226] border border-[#3a3a3e] rounded-lg px-2.5 py-2 text-white font-bold outline-none cursor-pointer"></select>
         </div>
@@ -4533,29 +4536,32 @@
       }
 
       loadSheetStateIntoCanvas(origIdx);
+      renderCanvas(false);
       const pdfBlob = buildMamezuPdfBlob(0.92, pageCanvases);
       const url = URL.createObjectURL(pdfBlob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `mamezu_all_${pageCanvases.length}sheets_${Date.now()}.pdf`;
+      a.download = `mamezu_all_${state.sheets.length}sheets_${Date.now()}.pdf`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       setTimeout(() => URL.revokeObjectURL(url), 5000);
-      showToast(`📚 全 ${pageCanvases.length} 枚の豆図を一括PDF保存しました`);
+      showToast(`📚 全${state.sheets.length}シートの一括PDFを保存しました`);
     }
 
-    // ==================== クラウド設定・現場管理・一時保管・台帳/野帳送信 ====================
+    // ==================== クラウド設定・一時保管・サーバー一覧・台帳/野帳送信 ====================
     function loadCloudConfig() {
       try {
         const raw = localStorage.getItem(STORAGE_KEY_CLOUD_CFG);
         if (raw) {
-          Object.assign(cloudCfg, JSON.parse(raw));
+          const parsed = JSON.parse(raw);
+          if (parsed && typeof parsed === 'object') {
+            cloudCfg = Object.assign(cloudCfg, parsed);
+            if (!Array.isArray(cloudCfg.savedSites)) cloudCfg.savedSites = [];
+          }
         }
-        if (!Array.isArray(cloudCfg.savedSites)) cloudCfg.savedSites = [];
-        if (!cloudCfg.commonSiteKey) cloudCfg.commonSiteKey = 'COMMON_SHARED_POOL';
 
-        // 写真台帳・測量野帳に保存済みの現場リストがあれば自動統合
+        // 写真台帳・測量野帳・健康確認メモに保存済みの現場リストがあれば自動統合
         ['genba_cloud_sync_config_v1', 'genba_fieldnote_cloud_sync_v1'].forEach(k => {
           const sRaw = localStorage.getItem(k);
           if (!sRaw) return;
@@ -4575,6 +4581,29 @@
           }
         });
 
+        try {
+          const hcUrl = localStorage.getItem('health_check_cf_url') || '';
+          const hcKey = localStorage.getItem('health_check_cf_site_key') || '';
+          const hcName = localStorage.getItem('health_check_cf_site_name') || '';
+          const hcSites = JSON.parse(localStorage.getItem('health_check_cf_saved_sites') || '[]');
+          if (!cloudCfg.apiUrl && hcUrl) cloudCfg.apiUrl = hcUrl;
+          if (!cloudCfg.siteKey && hcKey) cloudCfg.siteKey = hcKey;
+          if (hcKey && !cloudCfg.savedSites.some(x => x.siteKey === hcKey)) {
+            cloudCfg.savedSites.push({ siteKey: hcKey, siteName: hcName || hcKey, url: hcUrl });
+          }
+          if (Array.isArray(hcSites)) {
+            hcSites.forEach(st => {
+              if (st.siteKey && !cloudCfg.savedSites.some(x => x.siteKey === st.siteKey)) {
+                cloudCfg.savedSites.push({
+                  siteKey: st.siteKey,
+                  siteName: st.siteName || st.siteKey,
+                  url: st.url || hcUrl || ''
+                });
+              }
+            });
+          }
+        } catch (_) {}
+
         if (cloudCfg.siteKey && !cloudCfg.savedSites.some(x => x.siteKey === cloudCfg.siteKey)) {
           cloudCfg.savedSites.unshift({
             siteKey: cloudCfg.siteKey,
@@ -4582,8 +4611,6 @@
             url: cloudCfg.apiUrl || ''
           });
         }
-        const activeEntry = cloudCfg.savedSites.find(x => x.siteKey === cloudCfg.siteKey);
-        if (activeEntry && !cloudCfg.siteName) cloudCfg.siteName = activeEntry.siteName;
       } catch (_) {}
       updateCloudHeaderBadge();
     }
@@ -4598,32 +4625,85 @@
     function updateCloudHeaderBadge() {
       const badge = document.getElementById('hdr-site-badge');
       const sel = document.getElementById('hdr-site-select');
-      const hasSites = Array.isArray(cloudCfg.savedSites) && cloudCfg.savedSites.length > 0;
+      const sites = cloudCfg.savedSites || [];
 
-      if (badge) {
-        if (cloudCfg.apiUrl && cloudCfg.siteKey) {
-          badge.classList.add('hidden');
-          badge.classList.remove('sm:inline-block');
-        } else {
-          badge.textContent = 'ローカル単体（⚙️URL未設定）';
-          badge.classList.remove('hidden');
-          badge.classList.add('sm:inline-block');
-        }
-      }
-
-      if (sel) {
-        if (cloudCfg.apiUrl && hasSites) {
+      if (sites.length >= 1) {
+        if (badge) badge.classList.add('hidden');
+        if (sel) {
           sel.classList.remove('hidden');
           sel.classList.add('sm:inline-block');
-          sel.innerHTML = cloudCfg.savedSites.map(s => `
+          sel.innerHTML = sites.map(s => `
             <option value="${escapeHtml(s.siteKey)}" ${s.siteKey === cloudCfg.siteKey ? 'selected' : ''} class="bg-[#18181a]">
               🏢 ${escapeHtml(s.siteName || s.siteKey)}
             </option>
-          `).join('') + `<option value="__ADD_NEW__" class="bg-[#18181a]">＋ 現場を追加・設定...</option>`;
-        } else {
+          `).join('') + `<option value="__ADD_NEW__" class="bg-[#18181a] text-amber-300">＋ 新しい現場を登録...</option>`;
+        }
+      } else {
+        if (sel) {
           sel.classList.add('hidden');
           sel.classList.remove('sm:inline-block');
         }
+        if (badge) {
+          badge.classList.remove('hidden');
+          badge.textContent = cloudCfg.siteKey ? `☁️ ${cloudCfg.siteName || cloudCfg.siteKey}` : 'ローカル単体モード（クリックで現場設定）';
+        }
+      }
+    }
+
+    async function syncSitesFromCloudServer(silent = true) {
+      const inputUrl = (document.getElementById('inp-cfg-api-url')?.value || '').trim().replace(/\/+$/, '');
+      const targetUrl = inputUrl || (cloudCfg.apiUrl || '').trim().replace(/\/+$/, '');
+      if (!targetUrl) {
+        if (!silent) showToast('⚠️ 先に同期サーバーURLを入力してください');
+        return;
+      }
+      try {
+        const res = await fetch(`${targetUrl}/api/sites`);
+        const data = await res.json();
+        if (!res.ok || !data.ok || !Array.isArray(data.sites)) {
+          throw new Error(data.error || '現場一覧の取得に失敗しました');
+        }
+        const commonKey = cloudCfg.commonSiteKey || 'COMMON_SHARED_POOL';
+        let addedOrUpdated = 0;
+        data.sites.forEach(s => {
+          if (!s.site_key || s.site_key === commonKey) return;
+          const idx = cloudCfg.savedSites.findIndex(x => x.siteKey === s.site_key);
+          const entry = {
+            siteKey: s.site_key,
+            siteName: s.site_name || s.site_key,
+            url: targetUrl
+          };
+          if (idx >= 0) {
+            cloudCfg.savedSites[idx] = entry;
+          } else {
+            cloudCfg.savedSites.push(entry);
+            addedOrUpdated++;
+          }
+        });
+        if (!cloudCfg.siteKey && cloudCfg.savedSites.length > 0) {
+          cloudCfg.siteKey = cloudCfg.savedSites[0].siteKey;
+          cloudCfg.siteName = cloudCfg.savedSites[0].siteName;
+        }
+        persistCloudConfig();
+        renderSavedSitesDropdownInConfig();
+        if (!silent) {
+          showToast(`🔄 サーバーから ${data.sites.filter(s => s.site_key !== commonKey).length} 件の現場を同期しました`);
+        }
+      } catch (err) {
+        if (!silent) showToast(`❌ 同期エラー: ${err.message}`);
+      }
+    }
+
+    function openCloudConfigModal() {
+      renderSavedSitesDropdownInConfig();
+      document.getElementById('inp-cfg-api-url').value = cloudCfg.apiUrl || '';
+      document.getElementById('inp-cfg-site-key').value = cloudCfg.siteKey || '';
+      document.getElementById('inp-cfg-site-name').value = cloudCfg.siteName || '';
+      document.getElementById('inp-cfg-common-key').value = cloudCfg.commonSiteKey || 'COMMON_SHARED_POOL';
+      document.getElementById('inp-cfg-discord-url').value = cloudCfg.discordUrl || '';
+      openModal('modal-cloud-config');
+      if (cloudCfg.apiUrl) {
+        syncSitesFromCloudServer(true);
       }
     }
 
@@ -4688,16 +4768,6 @@
       persistCloudConfig();
       openCloudConfigModal();
       showToast('選択した現場をリストから削除しました');
-    }
-
-    function openCloudConfigModal() {
-      renderSavedSitesDropdownInConfig();
-      document.getElementById('inp-cfg-api-url').value = cloudCfg.apiUrl || '';
-      document.getElementById('inp-cfg-site-key').value = cloudCfg.siteKey || '';
-      document.getElementById('inp-cfg-site-name').value = cloudCfg.siteName || '';
-      document.getElementById('inp-cfg-common-key').value = cloudCfg.commonSiteKey || 'COMMON_SHARED_POOL';
-      document.getElementById('inp-cfg-discord-url').value = cloudCfg.discordUrl || '';
-      openModal('modal-cloud-config');
     }
 
     async function ensureCloudSiteRegistered(apiUrl, siteKey, siteName) {
@@ -5446,6 +5516,9 @@
       loadAutoSavedCanvas();
       updateDraftCountBadge();
       applyResponsiveUiLayout();
+      if (cloudCfg.apiUrl) {
+        syncSitesFromCloudServer(true);
+      }
     });
   </script>
 </body>
