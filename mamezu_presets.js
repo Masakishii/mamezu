@@ -228,3 +228,100 @@ window.buildPresetObjects100 = function(key) {
   };
   return map[key] || [];
 };
+
+// ==================== 線種10種・破線点線15種・矢印12種・寸法補助線10種・文字枠10種・ハッチ10種 ====================
+window.MAMEZU_STYLE_DEFS = {
+  // 1. 寸法線の補助線スタイル 10種類
+  dimExtStyles: [
+    { id: 'tick_short',  label: '① 建築斜線＋短補助線' },
+    { id: 'tick_long',   label: '② 建築斜線＋長補助線' },
+    { id: 'arrow_out',   label: '③ 外向き黒矢印＋補助線' },
+    { id: 'arrow_in',    label: '④ 内向き黒矢印＋補助線' },
+    { id: 'open_arrow',  label: '⑤ 白抜き矢印＋補助線' },
+    { id: 'dot_ext',     label: '⑥ 黒丸点＋補助線' },
+    { id: 'circle_open', label: '⑦ 白丸＋補助線' },
+    { id: 'bar_ext',     label: '⑧ 垂直止線＋延長補助線' },
+    { id: 'center_ext',  label: '⑨ 一点鎖線基準補助線' },
+    { id: 'none_ext',    label: '⑩ 補助線なし（線のみ）' }
+  ],
+
+  // 2. 文字枠線の種類（枠線無し ＋ もこもこ・ギザギザ含む10種類）
+  textBoxStyles: [
+    { id: 'none',    label: '枠線なし（白フチ文字）' },
+    { id: 'solid',   label: '① 実線枠（白背景）' },
+    { id: 'double',  label: '② 二重線枠' },
+    { id: 'dashed',  label: '③ 破線枠' },
+    { id: 'dotted',  label: '④ 点線枠' },
+    { id: 'pill',    label: '⑤ 角丸カプセル枠' },
+    { id: 'cloud',   label: '⑥ もこもこ雲枠' },
+    { id: 'zigzag',  label: '⑦ ギザギザ集中線枠' },
+    { id: 'callout', label: '⑧ 吹き出し枠' },
+    { id: 'bracket', label: '⑨ 四隅カギ括弧枠' },
+    { id: 'badge',   label: '⑩ ベタ塗り反転ラベル' }
+  ],
+
+  // 3. ハッチング 10種類
+  hatchPatterns: [
+    { id: 'diag45',     label: '① 45°右上がり斜線' },
+    { id: 'diag135',    label: '② 135°左上がり斜線' },
+    { id: 'cross',      label: '③ クロス網目 (45×135)' },
+    { id: 'grid',       label: '④ 正方格子メッシュ' },
+    { id: 'horiz',      label: '⑤ 水平平行線（水面/盛土）' },
+    { id: 'vert',       label: '⑥ 垂直平行線（壁/柱）' },
+    { id: 'dots',       label: '⑦ ドット点描（砂/モルタル）' },
+    { id: 'concrete',   label: '⑧ コンクリート（砕石＋点）' },
+    { id: 'brick',      label: '⑨ レンガ・ブロック積み' },
+    { id: 'insulation', label: '⑩ 断熱材（連続波ジグザグ）' }
+  ],
+
+  // 4. 各種線種 10種類
+  lineStyles: [
+    { id: 'solid',      label: '① 実線 ━━' },
+    { id: 'double',     label: '② 二重線 ══' },
+    { id: 'triple',     label: '③ 三重線 ☰' },
+    { id: 'wavy',       label: '④ 波線 〰️' },
+    { id: 'zigzag',     label: '⑤ ギザギザ線 ⚡' },
+    { id: 'scallop',    label: '⑥ もこもこ雲線 ☁️' },
+    { id: 'thick_thin', label: '⑦ 太細複合線 ▬─' },
+    { id: 'rail',       label: '⑧ 線路・目盛り線 ╪╪' },
+    { id: 'dashed',     label: '⑨ 破線 ╌╌' },
+    { id: 'dashdot',    label: '⑩ 一点鎖線 ╍╍' }
+  ],
+
+  // 5. 破線・点線の種類 15種類（配列は線幅 sw の倍率）
+  dashPatterns: [
+    { id: 'none',        label: '破線指定: 線種に従う',   mult: null },
+    { id: 'dash_s',      label: '01. 細かめ破線',        mult: [1.6, 1.2] },
+    { id: 'dash_m',      label: '02. 標準破線',          mult: [3.5, 2.2] },
+    { id: 'dash_l',      label: '03. 長め破線',          mult: [6.5, 3.0] },
+    { id: 'dash_xl',     label: '04. 超長破線',          mult: [10.5, 4.0] },
+    { id: 'dot_s',       label: '05. 細密点線',          mult: [0.6, 1.4] },
+    { id: 'dot_m',       label: '06. 標準点線',          mult: [0.9, 2.5] },
+    { id: 'dot_l',       label: '07. 間隔広め点線',      mult: [1.0, 4.5] },
+    { id: 'dashdot1',    label: '08. 一点鎖線（標準）',  mult: [5.5, 1.6, 0.8, 1.6] },
+    { id: 'dashdot1_l',  label: '09. 一点鎖線（通り芯）', mult: [9.0, 2.0, 1.0, 2.0] },
+    { id: 'dashdot2',    label: '10. 二点鎖線（標準）',  mult: [5.5, 1.4, 0.8, 1.4, 0.8, 1.4] },
+    { id: 'dashdot2_l',  label: '11. 二点鎖線（敷地境界）', mult: [9.0, 1.8, 1.0, 1.8, 1.0, 1.8] },
+    { id: 'dashdot3',    label: '12. 三点鎖線',          mult: [5.5, 1.3, 0.7, 1.3, 0.7, 1.3, 0.7, 1.3] },
+    { id: 'long_short',  label: '13. 長短交互破線',      mult: [6.5, 1.8, 2.5, 1.8] },
+    { id: 'double_dash', label: '14. 二連破線',          mult: [3.0, 1.2, 3.0, 3.8] },
+    { id: 'sparse_dash', label: '15. まばら破線',        mult: [2.5, 5.5] }
+  ],
+
+  // 6. 矢印・端点マーカー 12種類（none + 12種）
+  arrowTypes: [
+    { id: 'none',         label: 'なし' },
+    { id: 'filled',       label: '① ▶ 黒三角矢印' },
+    { id: 'open',         label: '② ▷ 白三角矢印' },
+    { id: 'sharp',        label: '③ ＞ 鋭角矢印' },
+    { id: 'stealth',      label: '④ ➤ ステルス矢印' },
+    { id: 'harpoon',      label: '⑤ ⇀ 片羽根矢印' },
+    { id: 'double_arrow', label: '⑥ ⏩ 二重矢印' },
+    { id: 'circle',       label: '⑦ ● 黒丸' },
+    { id: 'open_circle',  label: '⑧ ○ 白丸' },
+    { id: 'square',       label: '⑨ ■ 黒四角' },
+    { id: 'diamond',      label: '⑩ ◆ ひし形' },
+    { id: 'arch_tick',    label: '⑪ ／ 建築斜線' },
+    { id: 'bar',          label: '⑫ ｜ 垂直止線' }
+  ]
+};

@@ -148,7 +148,7 @@
           <option value="parallel" class="bg-[#18181a] text-white">⏸️ 平行線（複線・壁/配管幅）</option>
           <option value="arrow" class="bg-[#18181a] text-white">➡️ 矢印線</option>
           <option value="dimension" class="bg-[#18181a] text-white">📐 寸法線（自動mm計測）</option>
-          <option value="polyline" class="bg-[#18181a] text-white">⬠ 連続折れ線・多角形 (P)</option>
+          <option value="polyline" class="bg-[#18181a] text-white">⬠ 連続線（連続直線・折れ線・多角形）(P)</option>
         </optgroup>
         <optgroup label="施工・測量専用シンボル（6種）" class="bg-[#18181a] text-emerald-300">
           <option value="camera" class="bg-[#18181a] text-white">📷 撮影方向（カメラ＋視野扇形）</option>
@@ -181,7 +181,10 @@
     </div>
 
     <button id="btn-finish-polyline" onclick="finishCurrentPolyline()" class="hidden px-2.5 py-0.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded font-extrabold animate-pulse cursor-pointer">
-      ✅ 折れ線確定 (Enter)
+      ✅ 連続線確定 (Enter)
+    </button>
+    <button id="btn-toggle-poly-closed" onclick="toggleSelectedPolylineClosed()" class="hidden px-2 py-0.5 bg-purple-700 hover:bg-purple-600 text-white rounded font-bold cursor-pointer" title="開いた連続線と閉じた多角形を切り替え">
+      🔒 閉じる/開く
     </button>
 
     <div id="balloon-controls-box" class="hidden inline-flex items-center gap-1 bg-[#18181a] border border-amber-500/80 rounded px-1.5 py-0.5">
@@ -197,13 +200,43 @@
     </div>
 
     <div id="dim-pos-box" class="hidden inline-flex items-center gap-1 bg-[#18181a] border border-emerald-500/80 rounded px-1.5 py-0.5">
-      <span class="text-emerald-300 font-bold">📏文字位置:</span>
+      <span class="text-emerald-300 font-bold">📏位置:</span>
       <select id="sel-dim-text-pos" onchange="setDimTextPos(this.value)" class="bg-transparent font-extrabold text-white outline-none cursor-pointer">
         <option value="center" class="bg-[#18181a]">線上中央</option>
         <option value="above" class="bg-[#18181a]">線の上</option>
         <option value="below" class="bg-[#18181a]">線の下</option>
         <option value="right" class="bg-[#18181a]">右外側</option>
         <option value="left" class="bg-[#18181a]">左外側</option>
+      </select>
+      <span class="text-emerald-300 font-bold ml-1">補助線:</span>
+      <select id="sel-dim-ext-style" onchange="setDimExtStyle(this.value)" class="bg-transparent font-extrabold text-amber-200 outline-none cursor-pointer">
+        <option value="tick_short" class="bg-[#18181a]">① 建築斜線＋短補助線</option>
+        <option value="tick_long" class="bg-[#18181a]">② 建築斜線＋長補助線</option>
+        <option value="arrow_out" class="bg-[#18181a]">③ 外向き黒矢印＋補助線</option>
+        <option value="arrow_in" class="bg-[#18181a]">④ 内向き黒矢印＋補助線</option>
+        <option value="open_arrow" class="bg-[#18181a]">⑤ 白抜き矢印＋補助線</option>
+        <option value="dot_ext" class="bg-[#18181a]">⑥ 黒丸点＋補助線</option>
+        <option value="circle_open" class="bg-[#18181a]">⑦ 白丸＋補助線</option>
+        <option value="bar_ext" class="bg-[#18181a]">⑧ 垂直止線＋延長補助線</option>
+        <option value="center_ext" class="bg-[#18181a]">⑨ 一点鎖線基準補助線</option>
+        <option value="none_ext" class="bg-[#18181a]">⑩ 補助線なし（線のみ）</option>
+      </select>
+    </div>
+
+    <div id="text-box-style-box" class="hidden inline-flex items-center gap-1 bg-[#18181a] border border-purple-500/80 rounded px-1.5 py-0.5">
+      <span class="text-purple-300 font-bold">💬文字枠:</span>
+      <select id="sel-text-box-style" onchange="setTextBoxStyle(this.value)" class="bg-transparent font-extrabold text-white outline-none cursor-pointer">
+        <option value="none" class="bg-[#18181a]">枠線なし（白フチ文字）</option>
+        <option value="solid" class="bg-[#18181a]">① 実線枠（白背景）</option>
+        <option value="double" class="bg-[#18181a]">② 二重線枠</option>
+        <option value="dashed" class="bg-[#18181a]">③ 破線枠</option>
+        <option value="dotted" class="bg-[#18181a]">④ 点線枠</option>
+        <option value="pill" class="bg-[#18181a]">⑤ 角丸カプセル枠</option>
+        <option value="cloud" class="bg-[#18181a]">⑥ もこもこ雲枠</option>
+        <option value="zigzag" class="bg-[#18181a]">⑦ ギザギザ集中線枠</option>
+        <option value="callout" class="bg-[#18181a]">⑧ 吹き出し枠</option>
+        <option value="bracket" class="bg-[#18181a]">⑨ 四隅カギ括弧枠</option>
+        <option value="badge" class="bg-[#18181a]">⑩ ベタ塗り反転ラベル</option>
       </select>
     </div>
 
@@ -216,13 +249,36 @@
       </select>
     </div>
 
-    <select id="sel-line-style" onchange="setLineStyle(this.value)" class="bg-[#18181a] border border-sky-600/70 rounded px-1.5 py-0.5 font-bold text-sky-200 outline-none cursor-pointer">
-      <option value="solid" class="bg-[#18181a]">━━ 実線</option>
-      <option value="double" class="bg-[#18181a]">══ 二重線</option>
-      <option value="wavy" class="bg-[#18181a]">〰️ 波線</option>
-      <option value="dashed" class="bg-[#18181a]">╌╌ 破線</option>
-      <option value="dotted" class="bg-[#18181a]">┈┈ 点線</option>
-      <option value="dashdot" class="bg-[#18181a]">╍╍ 一点鎖線</option>
+    <select id="sel-line-style" onchange="setLineStyle(this.value)" class="bg-[#18181a] border border-sky-600/70 rounded px-1.5 py-0.5 font-bold text-sky-200 outline-none cursor-pointer" title="各種線種（10種類）">
+      <option value="solid" class="bg-[#18181a]">① 実線 ━━</option>
+      <option value="double" class="bg-[#18181a]">② 二重線 ══</option>
+      <option value="triple" class="bg-[#18181a]">③ 三重線 ☰</option>
+      <option value="wavy" class="bg-[#18181a]">④ 波線 〰️</option>
+      <option value="zigzag" class="bg-[#18181a]">⑤ ギザギザ線 ⚡</option>
+      <option value="scallop" class="bg-[#18181a]">⑥ もこもこ雲線 ☁️</option>
+      <option value="thick_thin" class="bg-[#18181a]">⑦ 太細複合線 ▬─</option>
+      <option value="rail" class="bg-[#18181a]">⑧ 線路・目盛り線 ╪╪</option>
+      <option value="dashed" class="bg-[#18181a]">⑨ 破線 ╌╌</option>
+      <option value="dashdot" class="bg-[#18181a]">⑩ 一点鎖線 ╍╍</option>
+    </select>
+
+    <select id="sel-dash-pattern" onchange="setDashPattern(this.value)" class="bg-[#18181a] border border-indigo-500/70 rounded px-1.5 py-0.5 font-bold text-indigo-200 outline-none cursor-pointer" title="破線・点線パターン（15種類）">
+      <option value="none" class="bg-[#18181a]">破線指定: 線種に従う</option>
+      <option value="dash_s" class="bg-[#18181a]">01. 細かめ破線</option>
+      <option value="dash_m" class="bg-[#18181a]">02. 標準破線</option>
+      <option value="dash_l" class="bg-[#18181a]">03. 長め破線</option>
+      <option value="dash_xl" class="bg-[#18181a]">04. 超長破線</option>
+      <option value="dot_s" class="bg-[#18181a]">05. 細密点線</option>
+      <option value="dot_m" class="bg-[#18181a]">06. 標準点線</option>
+      <option value="dot_l" class="bg-[#18181a]">07. 間隔広め点線</option>
+      <option value="dashdot1" class="bg-[#18181a]">08. 一点鎖線（標準）</option>
+      <option value="dashdot1_l" class="bg-[#18181a]">09. 一点鎖線（通り芯）</option>
+      <option value="dashdot2" class="bg-[#18181a]">10. 二点鎖線（標準）</option>
+      <option value="dashdot2_l" class="bg-[#18181a]">11. 二点鎖線（敷地境界）</option>
+      <option value="dashdot3" class="bg-[#18181a]">12. 三点鎖線</option>
+      <option value="long_short" class="bg-[#18181a]">13. 長短交互破線</option>
+      <option value="double_dash" class="bg-[#18181a]">14. 二連破線</option>
+      <option value="sparse_dash" class="bg-[#18181a]">15. まばら破線</option>
     </select>
 
     <select id="sel-stroke-width" onchange="setStrokeWidth(Number(this.value))" class="bg-[#18181a] border border-[#454549] rounded px-1.5 py-0.5 font-bold text-slate-200 outline-none cursor-pointer">
@@ -239,28 +295,36 @@
 
     <div class="inline-flex items-center gap-1 bg-[#18181a] border border-[#454549] rounded px-1.5 py-0.5">
       <span class="text-blue-300 font-bold">始:</span>
-      <select id="sel-arrow-start" onchange="setArrowStart(this.value)" class="bg-transparent font-bold text-blue-200 outline-none cursor-pointer">
+      <select id="sel-arrow-start" onchange="setArrowStart(this.value)" class="bg-transparent font-bold text-blue-200 outline-none cursor-pointer" title="始点矢印・マーカー（12種類）">
         <option value="none" class="bg-[#18181a]">なし</option>
-        <option value="filled" class="bg-[#18181a]">▶黒矢</option>
-        <option value="open" class="bg-[#18181a]">▷白矢</option>
-        <option value="sharp" class="bg-[#18181a]">＞矢印</option>
-        <option value="circle" class="bg-[#18181a]">●丸</option>
-        <option value="square" class="bg-[#18181a]">■四角</option>
-        <option value="arch_tick" class="bg-[#18181a]">／斜線</option>
-        <option value="dot" class="bg-[#18181a]">・点</option>
-        <option value="bar" class="bg-[#18181a]">｜縦線</option>
+        <option value="filled" class="bg-[#18181a]">① ▶ 黒三角矢印</option>
+        <option value="open" class="bg-[#18181a]">② ▷ 白三角矢印</option>
+        <option value="sharp" class="bg-[#18181a]">③ ＞ 鋭角矢印</option>
+        <option value="stealth" class="bg-[#18181a]">④ ➤ ステルス矢印</option>
+        <option value="harpoon" class="bg-[#18181a]">⑤ ⇀ 片羽根矢印</option>
+        <option value="double_arrow" class="bg-[#18181a]">⑥ ⏩ 二重矢印</option>
+        <option value="circle" class="bg-[#18181a]">⑦ ● 黒丸</option>
+        <option value="open_circle" class="bg-[#18181a]">⑧ ○ 白丸</option>
+        <option value="square" class="bg-[#18181a]">⑨ ■ 黒四角</option>
+        <option value="diamond" class="bg-[#18181a]">⑩ ◆ ひし形</option>
+        <option value="arch_tick" class="bg-[#18181a]">⑪ ／ 建築斜線</option>
+        <option value="bar" class="bg-[#18181a]">⑫ ｜ 垂直止線</option>
       </select>
       <span class="text-rose-300 font-bold">終:</span>
-      <select id="sel-arrow-end" onchange="setArrowEnd(this.value)" class="bg-transparent font-bold text-rose-200 outline-none cursor-pointer">
-        <option value="filled" class="bg-[#18181a]">▶黒矢</option>
+      <select id="sel-arrow-end" onchange="setArrowEnd(this.value)" class="bg-transparent font-bold text-rose-200 outline-none cursor-pointer" title="終点矢印・マーカー（12種類）">
+        <option value="filled" class="bg-[#18181a]">① ▶ 黒三角矢印</option>
         <option value="none" class="bg-[#18181a]">なし</option>
-        <option value="open" class="bg-[#18181a]">▷白矢</option>
-        <option value="sharp" class="bg-[#18181a]">＞矢印</option>
-        <option value="circle" class="bg-[#18181a]">●丸</option>
-        <option value="square" class="bg-[#18181a]">■四角</option>
-        <option value="arch_tick" class="bg-[#18181a]">／斜線</option>
-        <option value="dot" class="bg-[#18181a]">・点</option>
-        <option value="bar" class="bg-[#18181a]">｜縦線</option>
+        <option value="open" class="bg-[#18181a]">② ▷ 白三角矢印</option>
+        <option value="sharp" class="bg-[#18181a]">③ ＞ 鋭角矢印</option>
+        <option value="stealth" class="bg-[#18181a]">④ ➤ ステルス矢印</option>
+        <option value="harpoon" class="bg-[#18181a]">⑤ ⇀ 片羽根矢印</option>
+        <option value="double_arrow" class="bg-[#18181a]">⑥ ⏩ 二重矢印</option>
+        <option value="circle" class="bg-[#18181a]">⑦ ● 黒丸</option>
+        <option value="open_circle" class="bg-[#18181a]">⑧ ○ 白丸</option>
+        <option value="square" class="bg-[#18181a]">⑨ ■ 黒四角</option>
+        <option value="diamond" class="bg-[#18181a]">⑩ ◆ ひし形</option>
+        <option value="arch_tick" class="bg-[#18181a]">⑪ ／ 建築斜線</option>
+        <option value="bar" class="bg-[#18181a]">⑫ ｜ 垂直止線</option>
       </select>
       <button onclick="swapSelectedLineEnds()" class="px-1 bg-indigo-700 hover:bg-indigo-600 rounded text-white font-bold cursor-pointer">⇄</button>
     </div>
@@ -309,8 +373,8 @@
         <button onclick="setTool('arrow')" id="tool-arrow" class="tool-btn h-6 rounded hover:bg-[#38383c] text-slate-200 flex items-center justify-center text-xs cursor-pointer" title="矢印線">➡️</button>
         <button onclick="setTool('dimension')" id="tool-dimension" class="tool-btn h-6 rounded hover:bg-[#38383c] text-slate-200 flex items-center justify-center text-xs cursor-pointer" title="寸法線">📐</button>
 
-        <button onclick="setTool('polyline')" id="tool-polyline" class="tool-btn h-6 rounded hover:bg-[#38383c] text-slate-200 flex items-center justify-center text-xs cursor-pointer" title="連続折れ線・多角形 (P)">⬠</button>
-        <button onclick="setTool('breakline')" id="tool-breakline" class="tool-btn h-6 rounded hover:bg-[#38383c] text-slate-200 flex items-center justify-center text-xs cursor-pointer" title="破断線（省略ジグザグ）">✂️</button>
+        <button onclick="setTool('polyline')" id="tool-polyline" class="tool-btn h-6 rounded hover:bg-[#38383c] text-slate-200 flex items-center justify-center text-xs cursor-pointer" title="連続線（連続直線・折れ線・多角形）(P)">⬠</button>
+        <button onclick="setTool('breakline')" id="tool-breakline" class="tool-btn h-6 rounded hover:bg-[#38383c] text-slate-200 flex items-center justify-center text-xs cursor-pointer" title="破断線（省略ジグザグ線）">✂️</button>
 
         <button onclick="setTool('camera')" id="tool-camera" class="tool-btn h-6 rounded hover:bg-[#38383c] text-slate-200 flex items-center justify-center text-xs cursor-pointer" title="撮影方向">📷</button>
         <button onclick="setTool('balloon')" id="tool-balloon" class="tool-btn h-6 rounded hover:bg-[#38383c] text-slate-200 flex items-center justify-center text-xs cursor-pointer" title="自動連番バルーン">🔢</button>
@@ -410,14 +474,18 @@
         <div id="dock-props" class="p-2.5 space-y-2 text-[11px]">
           <div class="grid grid-cols-2 gap-1.5 bg-[#1f1f22] p-2 rounded border border-[#3a3a3e]">
             <div>
-              <label class="text-[10px] text-slate-400 font-bold block mb-0.5">ハッチング模様</label>
+              <label class="text-[10px] text-slate-400 font-bold block mb-0.5">ハッチング模様（10種類）</label>
               <select id="sel-hatch-pattern" onchange="setHatchPattern(this.value)" class="w-full bg-[#18181a] border border-[#454549] rounded px-1.5 py-1 font-bold text-emerald-300 outline-none cursor-pointer">
-                <option value="diag45">▨ 45°斜線</option>
-                <option value="diag135">▧ 135°逆斜線</option>
-                <option value="cross">╳ クロス網目</option>
-                <option value="grid">┼ 格子メッシュ</option>
-                <option value="dots">⠿ ドット点描</option>
-                <option value="concrete">🪨 コンクリート</option>
+                <option value="diag45">① 45°右上がり斜線</option>
+                <option value="diag135">② 135°左上がり斜線</option>
+                <option value="cross">③ クロス網目 (45×135)</option>
+                <option value="grid">④ 正方格子メッシュ</option>
+                <option value="horiz">⑤ 水平平行線（水面/盛土）</option>
+                <option value="vert">⑥ 垂直平行線（壁/柱）</option>
+                <option value="dots">⑦ ドット点描（砂/モルタル）</option>
+                <option value="concrete">⑧ コンクリート（砕石＋点）</option>
+                <option value="brick">⑨ レンガ・ブロック積み</option>
+                <option value="insulation">⑩ 断熱材（連続波ジグザグ）</option>
               </select>
             </div>
             <div class="flex flex-col justify-end">
@@ -653,6 +721,7 @@
           <button onclick="setTool('parallel'); closeModal('modal-mobile-tools');" class="p-2.5 rounded-xl bg-[#18181a] hover:bg-sky-800 border border-[#3a3a3e] text-center cursor-pointer">⏸️ 平行線</button>
           <button onclick="setTool('arrow'); closeModal('modal-mobile-tools');" class="p-2.5 rounded-xl bg-[#18181a] hover:bg-sky-800 border border-[#3a3a3e] text-center cursor-pointer">➡️ 矢印</button>
           <button onclick="setTool('dimension'); closeModal('modal-mobile-tools');" class="p-2.5 rounded-xl bg-[#18181a] hover:bg-sky-800 border border-[#3a3a3e] text-center cursor-pointer">📐 寸法線</button>
+          <button onclick="setTool('polyline'); closeModal('modal-mobile-tools');" class="p-2.5 rounded-xl bg-[#18181a] hover:bg-sky-800 border border-sky-600 text-sky-200 text-center cursor-pointer">⬠ 連続線</button>
           <button onclick="setTool('cloud'); closeModal('modal-mobile-tools');" class="p-2.5 rounded-xl bg-[#18181a] hover:bg-sky-800 border border-[#3a3a3e] text-center cursor-pointer">☁️ 雲マーク</button>
           <button onclick="setTool('camera'); closeModal('modal-mobile-tools');" class="p-2.5 rounded-xl bg-[#18181a] hover:bg-sky-800 border border-[#3a3a3e] text-center cursor-pointer">📷 撮影方向</button>
           <button onclick="setTool('balloon'); closeModal('modal-mobile-tools');" class="p-2.5 rounded-xl bg-[#18181a] hover:bg-sky-800 border border-amber-600 text-amber-200 text-center cursor-pointer">🔢 連番バルーン</button>
@@ -924,11 +993,14 @@
       multiSelectMode: false,
       opacity: 100,
       lineStyle: 'solid',
+      dashPattern: 'none',
       strokeWidth: 4,
       parallelGap: 22,
       balloonNext: 1,
       balloonStyle: 'circled',
       dimTextPos: 'center',
+      dimExtStyle: 'tick_short',
+      textBoxStyle: 'none',
       arrowStart: 'none',
       arrowEnd: 'filled',
       hatchPattern: 'diag45',
@@ -949,6 +1021,7 @@
       cropBox: null,
       activeSnapPt: null,
       buildingPoly: null,
+      polyHoverPt: null,
       startX: 0,
       startY: 0,
       lastX: 0,
@@ -1179,6 +1252,7 @@
       state.selectedIndex = -1;
       state.selectedIndices = [];
       state.buildingPoly = null;
+      state.polyHoverPt = null;
       syncToolUi(); renderCanvas(); autoSaveCanvas();
     }
 
@@ -1189,6 +1263,7 @@
       state.selectedIndex = -1;
       state.selectedIndices = [];
       state.buildingPoly = null;
+      state.polyHoverPt = null;
       syncToolUi(); renderCanvas(); autoSaveCanvas();
     }
 
@@ -1692,7 +1767,7 @@
       parallel: '⏸️ 平行線（複線・壁/配管幅）',
       arrow: '➡️ 矢印線',
       dimension: '📐 寸法線（自動mm計測）',
-      polyline: '⬠ 連続折れ線・多角形 (P)',
+      polyline: '⬠ 連続線（連続直線・折れ線・多角形）(P)',
       camera: '📷 撮影方向（カメラ＋視野扇形）',
       balloon: '🔢 自動連番バルーン（①②③…）',
       breakline: '✂️ 破断線（断面省略ジグザグ線）',
@@ -1740,6 +1815,7 @@
 
       const selList = getSelectedIndicesList();
       const sel = state.objects[state.selectedIndex];
+      document.getElementById('btn-toggle-poly-closed')?.classList.toggle('hidden', !(sel && sel.type === 'polyline'));
       const hasSel = selList.length > 0;
       const hasGroup = selList.some(i => state.objects[i]?.groupId);
 
@@ -1762,7 +1838,7 @@
       document.getElementById('mob-btn-group')?.classList.toggle('hidden', selList.length < 2);
       document.getElementById('btn-ungroup-sel')?.classList.toggle('hidden', !hasGroup);
 
-      const showGapBox = state.tool === 'parallel' || state.lineStyle === 'double' || (sel && (sel.type === 'parallel' || sel.lineStyle === 'double'));
+      const showGapBox = state.tool === 'parallel' || ['double', 'triple'].includes(state.lineStyle) || (sel && (sel.type === 'parallel' || ['double', 'triple'].includes(sel.lineStyle)));
       document.getElementById('parallel-gap-box')?.classList.toggle('hidden', !showGapBox);
       const gapVal = (sel && typeof sel.gap === 'number') ? sel.gap : (state.parallelGap || 22);
       const gapInp = document.getElementById('inp-parallel-gap');
@@ -1823,11 +1899,15 @@
         const sStart = document.getElementById('sel-arrow-start');
         const sEnd = document.getElementById('sel-arrow-end');
         const sLine = document.getElementById('sel-line-style');
+        const sDash = document.getElementById('sel-dash-pattern');
+        const sHatch = document.getElementById('sel-hatch-pattern');
         const sWidth = document.getElementById('sel-stroke-width');
         const cPick = document.getElementById('color-picker');
         if (sStart && sel.arrowStart) sStart.value = sel.arrowStart;
         if (sEnd && sel.arrowEnd) sEnd.value = sel.arrowEnd;
         if (sLine && sel.lineStyle) sLine.value = sel.lineStyle;
+        if (sDash) sDash.value = sel.dashPattern || 'none';
+        if (sHatch && sel.hatchPattern) sHatch.value = sel.hatchPattern;
         if (sWidth && sel.strokeWidth) sWidth.value = String(sel.strokeWidth);
         if (cPick && sel.color) cPick.value = sel.color;
       }
@@ -1870,6 +1950,13 @@
       document.getElementById('dim-pos-box')?.classList.toggle('hidden', !showDimBox);
       const dimPosSel = document.getElementById('sel-dim-text-pos');
       if (dimPosSel) dimPosSel.value = (sel && sel.type === 'dimension' && sel.textPos) ? sel.textPos : (state.dimTextPos || 'center');
+      const dimExtSel = document.getElementById('sel-dim-ext-style');
+      if (dimExtSel) dimExtSel.value = (sel && sel.type === 'dimension' && sel.dimExtStyle) ? sel.dimExtStyle : (state.dimExtStyle || 'tick_short');
+
+      const showTextBox = state.tool === 'text' || (sel && sel.type === 'text');
+      document.getElementById('text-box-style-box')?.classList.toggle('hidden', !showTextBox);
+      const textBoxSel = document.getElementById('sel-text-box-style');
+      if (textBoxSel) textBoxSel.value = (sel && sel.type === 'text' && sel.boxStyle) ? sel.boxStyle : (state.textBoxStyle || 'none');
 
       renderMobileContextBars();
     }
@@ -1932,6 +2019,45 @@
       syncToolUi();
     }
 
+    function setDimExtStyle(extStyle) {
+      state.dimExtStyle = extStyle;
+      const sel = state.objects[state.selectedIndex];
+      if (sel && sel.type === 'dimension') {
+        pushUndoSnapshot();
+        sel.dimExtStyle = extStyle;
+        renderCanvas(); autoSaveCanvas();
+      }
+      syncToolUi();
+    }
+
+    function setTextBoxStyle(boxStyle) {
+      state.textBoxStyle = boxStyle;
+      const indices = getSelectedIndicesList();
+      if (indices.length > 0) {
+        pushUndoSnapshot();
+        indices.forEach(i => {
+          if (state.objects[i]?.type === 'text') state.objects[i].boxStyle = boxStyle;
+        });
+        renderCanvas(); autoSaveCanvas();
+      }
+      syncToolUi();
+    }
+
+    function setDashPattern(patId) {
+      state.dashPattern = patId;
+      const sDash = document.getElementById('sel-dash-pattern');
+      if (sDash) sDash.value = patId;
+      const indices = getSelectedIndicesList();
+      if (indices.length > 0) {
+        pushUndoSnapshot();
+        indices.forEach(i => {
+          if (state.objects[i]) state.objects[i].dashPattern = patId;
+        });
+        renderCanvas(); autoSaveCanvas();
+      }
+      syncToolUi();
+    }
+
     function adjustSelectedObjectFontSize(delta) {
       const sel = state.objects[state.selectedIndex];
       if (!sel) return;
@@ -1974,6 +2100,20 @@
       }
 
       if (!sel) {
+        if (state.tool === 'polyline') {
+          box.classList.remove('hidden');
+          const ptCnt = state.buildingPoly ? state.buildingPoly.points.length : 0;
+          box.innerHTML = `
+            <div class="flex items-center justify-between gap-1.5">
+              <span class="font-extrabold text-sky-300">⬠ 連続線作図中（頂点数: ${ptCnt}）</span>
+              ${ptCnt >= 2 ? `<button onclick="finishCurrentPolyline()" class="px-2.5 py-1 bg-emerald-600 text-white rounded-lg font-extrabold cursor-pointer">✅ 連続線確定</button>` : `<span class="text-[10px] text-slate-300">タップで頂点追加</span>`}
+            </div>
+            <div class="flex items-center justify-between gap-1 text-[10px] text-slate-300">
+              <span>緑の始点タップで多角形化／同じ点タップで確定</span>
+            </div>
+          `;
+          return;
+        }
         if (state.tool === 'balloon') {
           box.classList.remove('hidden');
           const curSt = state.balloonStyle || 'circled';
@@ -2004,13 +2144,17 @@
       if (sel.type === 'dimension') {
         const autoMm = `${Math.round(Math.hypot(sel.x2 - sel.x1, sel.y2 - sel.y1) * 5)}mm`;
         const curPos = sel.textPos || 'center';
+        const curExt = sel.dimExtStyle || 'tick_short';
+        const extOpts = (window.MAMEZU_STYLE_DEFS?.dimExtStyles || []).map(x => `<option value="${x.id}" ${curExt === x.id ? 'selected' : ''}>${x.label}</option>`).join('');
         box.innerHTML = `
           <div class="flex items-center gap-1.5">
-            <span class="font-extrabold text-emerald-300 shrink-0">📐寸法文字:</span>
+            <span class="font-extrabold text-emerald-300 shrink-0">📐寸法:</span>
             <input type="text" value="${escapeHtml(sel.text || '')}" placeholder="空欄=${autoMm}"
                    oninput="updateSelectedObjectText(this.value)"
                    class="flex-1 min-w-0 bg-[#18181a] border border-emerald-500 rounded-lg px-2 py-1 text-white font-bold outline-none" />
-            <button onclick="updateSelectedObjectText('')" class="px-2 py-1 bg-[#18181a] border border-[#454549] text-slate-300 rounded-lg text-[10px] font-bold cursor-pointer">自動mm</button>
+            <select onchange="setDimExtStyle(this.value)" class="bg-[#18181a] border border-amber-500/80 rounded-lg px-1.5 py-1 text-[10px] font-bold text-amber-200 max-w-[130px]">
+              ${extOpts}
+            </select>
           </div>
           <div class="flex items-center justify-between gap-1">
             <span class="text-[10px] text-amber-300 font-bold shrink-0">文字位置:</span>
@@ -2054,6 +2198,8 @@
 
       if (['text', 'leader', 'slope', 'level', 'camera'].includes(sel.type)) {
         const typeLabels = { text: 'T文字', leader: '🏷️引出線', slope: '⊿勾配', level: '▽レベル', camera: '📷撮影' };
+        const curBox = sel.boxStyle || 'none';
+        const boxOpts = (window.MAMEZU_STYLE_DEFS?.textBoxStyles || []).map(x => `<option value="${x.id}" ${curBox === x.id ? 'selected' : ''}>${x.label}</option>`).join('');
         box.innerHTML = `
           <div class="flex items-center gap-1.5">
             <span class="font-extrabold text-sky-300 shrink-0">${typeLabels[sel.type]}:</span>
@@ -2065,10 +2211,14 @@
             ` : ''}
           </div>
           <div class="flex items-center justify-between gap-1 overflow-x-auto text-[10px] font-bold">
-            ${sel.type === 'leader' ? `
+            ${sel.type === 'text' ? `
+              <select onchange="setTextBoxStyle(this.value)" class="bg-[#18181a] border border-purple-500/80 rounded px-2 py-1 text-purple-200 font-bold">
+                ${boxOpts}
+              </select>
+            ` : (sel.type === 'leader' ? `
               <div class="flex gap-1">
                 <button onclick="setArrowStart('filled')" class="px-2 py-1 bg-[#18181a] border border-blue-600/70 text-blue-200 rounded cursor-pointer">▶黒矢</button>
-                <button onclick="setArrowStart('dot')" class="px-2 py-1 bg-[#18181a] border border-blue-600/70 text-blue-200 rounded cursor-pointer">・点</button>
+                <button onclick="setArrowStart('stealth')" class="px-2 py-1 bg-[#18181a] border border-blue-600/70 text-blue-200 rounded cursor-pointer">➤ステルス</button>
                 <button onclick="setArrowStart('circle')" class="px-2 py-1 bg-[#18181a] border border-blue-600/70 text-blue-200 rounded cursor-pointer">●丸</button>
                 <button onclick="setLineStyle(curLs==='dashed'?'solid':'dashed')" class="px-2 py-1 bg-[#18181a] border border-[#454549] rounded cursor-pointer">${curLs==='dashed'?'━━実線':'╌╌破線'}</button>
               </div>
@@ -2085,7 +2235,7 @@
                 <button onclick="updateSelectedObjectText('FL+500')" class="px-2 py-1 bg-[#18181a] rounded cursor-pointer">FL+500</button>
                 <button onclick="updateSelectedObjectText('SL-150')" class="px-2 py-1 bg-[#18181a] rounded cursor-pointer">SL-150</button>
               </div>
-            ` : `<span class="text-slate-400">ドラッグで移動・四隅で拡大縮小</span>`))}
+            ` : `<span class="text-slate-400">ドラッグで移動・四隅で拡大縮小</span>`)))}
             <button onclick="duplicateSelectedObject()" class="px-2 py-1 bg-sky-800 text-white rounded cursor-pointer ml-auto">📋複製</button>
           </div>
         `;
@@ -2150,19 +2300,24 @@
         return;
       }
 
+      const lineOpts = (window.MAMEZU_STYLE_DEFS?.lineStyles || []).map(x => `<option value="${x.id}" ${curLs === x.id ? 'selected' : ''}>${x.label}</option>`).join('');
+      const dashOpts = (window.MAMEZU_STYLE_DEFS?.dashPatterns || []).map(x => `<option value="${x.id}" ${(sel.dashPattern || 'none') === x.id ? 'selected' : ''}>${x.label}</option>`).join('');
+      const hatchOpts = (window.MAMEZU_STYLE_DEFS?.hatchPatterns || []).map(x => `<option value="${x.id}" ${(sel.hatchPattern || 'diag45') === x.id ? 'selected' : ''}>${x.label}</option>`).join('');
       box.innerHTML = `
         <div class="flex items-center justify-between gap-1 text-[10px] font-bold overflow-x-auto">
-          <div class="flex gap-1">
-            <button onclick="setLineStyle('solid')" class="px-2 py-1 rounded ${curLs === 'solid' ? 'bg-sky-600 text-white' : 'bg-[#18181a] text-slate-300'} cursor-pointer">━━実線</button>
-            <button onclick="setLineStyle('double')" class="px-2 py-1 rounded ${curLs === 'double' ? 'bg-sky-600 text-white' : 'bg-[#18181a] text-slate-300'} cursor-pointer">══二重線</button>
-            <button onclick="setLineStyle('wavy')" class="px-2 py-1 rounded ${curLs === 'wavy' ? 'bg-sky-600 text-white' : 'bg-[#18181a] text-slate-300'} cursor-pointer">〰️波線</button>
-            <button onclick="setLineStyle('dashed')" class="px-2 py-1 rounded ${curLs === 'dashed' ? 'bg-sky-600 text-white' : 'bg-[#18181a] text-slate-300'} cursor-pointer">╌╌破線</button>
-          </div>
+          <select onchange="setLineStyle(this.value)" class="bg-[#18181a] border border-sky-600/70 rounded px-1.5 py-1 text-sky-200 font-bold">
+            ${lineOpts}
+          </select>
+          <select onchange="setDashPattern(this.value)" class="bg-[#18181a] border border-indigo-500/70 rounded px-1.5 py-1 text-indigo-200 font-bold max-w-[125px]">
+            ${dashOpts}
+          </select>
           ${['line', 'parallel', 'arrow'].includes(sel.type) ? `
-            <button onclick="swapSelectedLineEnds()" class="px-2 py-1 bg-indigo-700 text-white rounded cursor-pointer">⇄向き反転</button>
+            <button onclick="swapSelectedLineEnds()" class="px-2 py-1 bg-indigo-700 text-white rounded cursor-pointer shrink-0">⇄反転</button>
+          ` : (sel.type === 'polyline' ? `
+            <button onclick="toggleSelectedPolylineClosed()" class="px-2 py-1 bg-purple-700 text-white rounded cursor-pointer shrink-0">${sel.closed ? '🔓開く' : '🔒閉じる'}</button>
           ` : `
-            <button onclick="setFillTint(!sel.fillTint)" class="px-2 py-1 ${sel.fillTint ? 'bg-amber-600 text-white' : 'bg-[#18181a] text-amber-200'} rounded cursor-pointer">🎨薄色塗り</button>
-          `}
+            <button onclick="setFillTint(!sel.fillTint)" class="px-2 py-1 ${sel.fillTint ? 'bg-amber-600 text-white' : 'bg-[#18181a] text-amber-200'} rounded cursor-pointer shrink-0">🎨塗り</button>
+          `)}
         </div>
         <div class="flex items-center justify-between gap-2 text-[10px] font-bold">
           <div class="flex items-center gap-1 flex-1">
@@ -2170,11 +2325,8 @@
             <input type="range" min="10" max="100" value="${sel.opacity ?? 100}" oninput="setObjectOpacity(Number(this.value))" class="flex-1 accent-sky-400" />
           </div>
           ${sel.type === 'hatch' ? `
-            <select onchange="setHatchPattern(this.value)" class="bg-[#18181a] border border-[#454549] rounded px-1.5 py-0.5 text-emerald-300 font-bold">
-              <option value="diag45" ${sel.hatchPattern==='diag45'?'selected':''}>▨45°斜線</option>
-              <option value="cross" ${sel.hatchPattern==='cross'?'selected':''}>╳クロス</option>
-              <option value="grid" ${sel.hatchPattern==='grid'?'selected':''}>┼格子</option>
-              <option value="dots" ${sel.hatchPattern==='dots'?'selected':''}>⠿ドット</option>
+            <select onchange="setHatchPattern(this.value)" class="bg-[#18181a] border border-emerald-500/70 rounded px-1.5 py-0.5 text-emerald-300 font-bold max-w-[130px]">
+              ${hatchOpts}
             </select>
           ` : ''}
           <button onclick="duplicateSelectedObject()" class="px-2 py-1 bg-sky-800 text-white rounded cursor-pointer">📋複製</button>
@@ -2207,6 +2359,8 @@
       if (!state.buildingPoly) return;
       const poly = state.buildingPoly;
       state.buildingPoly = null;
+      state.polyHoverPt = null;
+      state.hudText = '';
       if (poly.points.length >= 2) {
         pushUndoSnapshot();
         state.objects.push(poly);
@@ -2214,7 +2368,19 @@
       }
       state.tool = 'select';
       syncToolUi(); renderCanvas(); autoSaveCanvas();
-      showToast('⬠ 折れ線・多角形を確定しました');
+      showToast('⬠ 連続線を確定しました（各頂点の青丸ドラッグで微調整可）');
+    }
+
+    function toggleSelectedPolylineClosed() {
+      const sel = state.objects[state.selectedIndex];
+      if (!sel || sel.type !== 'polyline' || (sel.points || []).length < 3) {
+        showToast('3頂点以上の連続線を選択してください');
+        return;
+      }
+      pushUndoSnapshot();
+      sel.closed = !sel.closed;
+      syncToolUi(); renderCanvas(); autoSaveCanvas();
+      showToast(sel.closed ? '🔒 連続線を閉じて多角形にしました' : '🔓 多角形を開いた連続線に戻しました');
     }
 
     function setBgType(bg) { state.bgType = bg; syncToolUi(); renderCanvas(); autoSaveCanvas(); }
@@ -2849,19 +3015,67 @@
       ctx.restore();
     }
 
-    function strokeStyledSegment(ctx, x1, y1, x2, y2, style, sw, gap = 14) {
+    function resolveDashArray(lineStyle, dashPattern, sw) {
+      if (dashPattern && dashPattern !== 'none') {
+        const found = (window.MAMEZU_STYLE_DEFS?.dashPatterns || []).find(d => d.id === dashPattern);
+        if (found && Array.isArray(found.mult)) {
+          return found.mult.map(m => Math.max(1.5, Math.round(m * sw * 10) / 10));
+        }
+      }
+      if (lineStyle === 'dashed') return [sw * 3.5, sw * 2.2];
+      if (lineStyle === 'dotted') return [sw, sw * 2.2];
+      if (lineStyle === 'dashdot') return [sw * 4.5, sw * 2, sw, sw * 2];
+      return [];
+    }
+
+    function strokeStyledSegment(ctx, x1, y1, x2, y2, style, sw, gap = 14, dashArr = []) {
       const dx = x2 - x1, dy = y2 - y1, len = Math.hypot(dx, dy);
       if (len < 1) return;
       const ang = Math.atan2(dy, dx);
 
-      if (style === 'double') {
+      if (style === 'double' || style === 'triple') {
         const nx = -Math.sin(ang) * (gap / 2);
         const ny = Math.cos(ang) * (gap / 2);
-        ctx.save(); ctx.setLineDash([]);
+        ctx.save();
+        ctx.setLineDash(dashArr);
         ctx.beginPath();
         ctx.moveTo(x1 + nx, y1 + ny); ctx.lineTo(x2 + nx, y2 + ny);
         ctx.moveTo(x1 - nx, y1 - ny); ctx.lineTo(x2 - nx, y2 - ny);
-        ctx.stroke(); ctx.restore();
+        if (style === 'triple') {
+          ctx.moveTo(x1, y1); ctx.lineTo(x2, y2);
+        }
+        ctx.stroke();
+        ctx.restore();
+        return;
+      }
+
+      if (style === 'thick_thin') {
+        const nx = -Math.sin(ang) * (Math.max(5, sw * 1.4));
+        const ny = Math.cos(ang) * (Math.max(5, sw * 1.4));
+        ctx.save();
+        ctx.setLineDash(dashArr);
+        ctx.lineWidth = sw * 1.5;
+        ctx.beginPath(); ctx.moveTo(x1 + nx * 0.4, y1 + ny * 0.4); ctx.lineTo(x2 + nx * 0.4, y2 + ny * 0.4); ctx.stroke();
+        ctx.lineWidth = Math.max(1.5, sw * 0.55);
+        ctx.beginPath(); ctx.moveTo(x1 - nx * 0.8, y1 - ny * 0.8); ctx.lineTo(x2 - nx * 0.8, y2 - ny * 0.8); ctx.stroke();
+        ctx.restore();
+        return;
+      }
+
+      if (style === 'rail') {
+        ctx.save();
+        ctx.setLineDash(dashArr);
+        ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.translate(x1, y1); ctx.rotate(ang);
+        const tickStep = Math.max(14, sw * 4);
+        const tickHalf = Math.max(5, sw * 1.6);
+        ctx.beginPath();
+        for (let d = tickStep / 2; d < len; d += tickStep) {
+          ctx.moveTo(d, -tickHalf); ctx.lineTo(d, tickHalf);
+        }
+        ctx.stroke();
+        ctx.restore();
         return;
       }
 
@@ -2875,98 +3089,62 @@
         return;
       }
 
+      if (style === 'zigzag') {
+        const step = Math.max(12, sw * 3.4);
+        const amp = Math.max(5, sw * 1.6);
+        ctx.save(); ctx.translate(x1, y1); ctx.rotate(ang); ctx.setLineDash([]);
+        ctx.beginPath(); ctx.moveTo(0, 0);
+        let dir = 1;
+        for (let d = step / 2; d < len; d += step / 2) {
+          ctx.lineTo(d, dir * amp);
+          dir = -dir;
+        }
+        ctx.lineTo(len, 0);
+        ctx.stroke(); ctx.restore();
+        return;
+      }
+
+      if (style === 'scallop') {
+        const pitch = Math.max(18, sw * 4.8);
+        const count = Math.max(1, Math.round(len / pitch));
+        const seg = len / count;
+        const bulge = seg * 0.58;
+        ctx.save(); ctx.translate(x1, y1); ctx.rotate(ang); ctx.setLineDash([]);
+        ctx.beginPath(); ctx.moveTo(0, 0);
+        for (let i = 0; i < count; i++) {
+          const sx = i * seg;
+          ctx.quadraticCurveTo(sx + seg / 2, -bulge, sx + seg, 0);
+        }
+        ctx.stroke(); ctx.restore();
+        return;
+      }
+
+      ctx.save();
+      ctx.setLineDash(dashArr);
       ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+      ctx.restore();
     }
 
-    function strokeStyledRect(ctx, x, y, w, h, style, sw, gap = 10) {
-      if (style === 'double') {
+    function strokeStyledRect(ctx, x, y, w, h, style, sw, gap = 10, dashArr = []) {
+      if (style === 'double' || style === 'triple') {
         const g = Math.max(4, gap / 2);
-        ctx.save(); ctx.setLineDash([]);
+        ctx.save(); ctx.setLineDash(dashArr);
         ctx.strokeRect(x, y, w, h);
         if (w > g * 2.5 && h > g * 2.5) ctx.strokeRect(x + g, y + g, w - g * 2, h - g * 2);
+        if (style === 'triple' && w > g * 4.5 && h > g * 4.5) ctx.strokeRect(x + g * 2, y + g * 2, w - g * 4, h - g * 4);
         ctx.restore();
         return;
       }
-      if (style === 'wavy') {
-        strokeStyledSegment(ctx, x, y, x + w, y, 'wavy', sw);
-        strokeStyledSegment(ctx, x + w, y, x + w, y + h, 'wavy', sw);
-        strokeStyledSegment(ctx, x + w, y + h, x, y + h, 'wavy', sw);
-        strokeStyledSegment(ctx, x, y + h, x, y, 'wavy', sw);
+      if (['wavy', 'zigzag', 'scallop', 'thick_thin', 'rail'].includes(style)) {
+        strokeStyledSegment(ctx, x, y, x + w, y, style, sw, gap, dashArr);
+        strokeStyledSegment(ctx, x + w, y, x + w, y + h, style, sw, gap, dashArr);
+        strokeStyledSegment(ctx, x + w, y + h, x, y + h, style, sw, gap, dashArr);
+        strokeStyledSegment(ctx, x, y + h, x, y, style, sw, gap, dashArr);
         return;
       }
-      ctx.strokeRect(x, y, w, h);
-    }
-
-    function drawBreakLine(ctx, x1, y1, x2, y2, sw) {
-      const dx = x2 - x1, dy = y2 - y1, len = Math.hypot(dx, dy);
-      if (len < 4) return;
-      const ang = Math.atan2(dy, dx), zigW = Math.min(26, len * 0.35), zigH = Math.max(12, sw * 3.4), mid = len / 2;
-      ctx.save(); ctx.translate(x1, y1); ctx.rotate(ang);
-      ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(mid - zigW / 2, 0);
-      ctx.lineTo(mid - zigW / 6, -zigH); ctx.lineTo(mid + zigW / 6, zigH);
-      ctx.lineTo(mid + zigW / 2, 0); ctx.lineTo(len, 0); ctx.stroke(); ctx.restore();
-    }
-
-    function drawCameraSymbol(ctx, obj) {
-      const col = obj.color || '#dc2626', { x1, y1, x2, y2 } = obj;
-      const dist = Math.max(48, Math.hypot(x2 - x1, y2 - y1)), ang = Math.atan2(y2 - y1, x2 - x1), spread = (28 * Math.PI) / 180;
       ctx.save();
-      ctx.fillStyle = col + '26'; ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.setLineDash([6, 4]);
-      ctx.beginPath(); ctx.moveTo(x1, y1); ctx.arc(x1, y1, dist, ang - spread, ang + spread); ctx.closePath(); ctx.fill(); ctx.stroke();
-      ctx.setLineDash([]);
-      ctx.translate(x1, y1); ctx.rotate(ang);
-      ctx.fillStyle = '#ffffff'; ctx.strokeStyle = col; ctx.lineWidth = 3;
-      ctx.fillRect(-16, -12, 26, 24); ctx.strokeRect(-16, -12, 26, 24);
-      ctx.beginPath(); ctx.moveTo(10, -7); ctx.lineTo(20, -12); ctx.lineTo(20, 12); ctx.lineTo(10, 7); ctx.closePath();
-      ctx.fillStyle = col; ctx.fill(); ctx.restore();
-      const txt = obj.text || '撮影①';
-      if (txt) {
-        ctx.save(); ctx.font = 'bold 18px sans-serif';
-        const tw = ctx.measureText(txt).width + 10;
-        ctx.fillStyle = 'rgba(255,255,255,0.92)'; ctx.fillRect(x1 - tw / 2, y1 + 18, tw, 22);
-        ctx.fillStyle = col; ctx.textAlign = 'center'; ctx.fillText(txt, x1, y1 + 35); ctx.restore();
-      }
-    }
-
-    function drawSlopeSymbol(ctx, obj) {
-      const col = obj.color || '#2563eb', { x1, y1, x2, y2 } = obj;
-      const ang = Math.atan2(y2 - y1, x2 - x1), mx = (x1 + x2) / 2, my = (y1 + y2) / 2;
-      const triLen = Math.min(80, Math.max(36, Math.hypot(x2 - x1, y2 - y1) * 0.45)), triH = Math.round(triLen * 0.35);
-      ctx.save(); ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = obj.strokeWidth || 3.5;
-      ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
-      drawArrowHead(ctx, 'filled', x2, y2, ang, col, obj.strokeWidth || 3.5);
-      ctx.translate(mx, my); ctx.rotate(ang);
-      ctx.beginPath(); ctx.moveTo(-triLen / 2, -10); ctx.lineTo(triLen / 2, -10); ctx.lineTo(triLen / 2, -10 - triH); ctx.closePath(); ctx.stroke(); ctx.restore();
-      const txt = obj.text || '1/100';
-      ctx.save(); ctx.font = 'bold 20px sans-serif';
-      const tw = ctx.measureText(txt).width + 10;
-      ctx.fillStyle = 'rgba(255,255,255,0.92)'; ctx.fillRect(mx - tw / 2, my - 46, tw, 24);
-      ctx.fillStyle = col; ctx.textAlign = 'center'; ctx.fillText(txt, mx, my - 28); ctx.restore();
-    }
-
-    function drawLevelSymbol(ctx, obj) {
-      const col = obj.color || '#dc2626', { x, y } = obj, txt = obj.text || 'GL±0';
-      ctx.save(); ctx.font = 'bold 20px sans-serif';
-      const lineW = Math.max(84, ctx.measureText(txt).width + 34);
-      ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = 3;
-      ctx.beginPath(); ctx.moveTo(x - 16, y); ctx.lineTo(x + lineW, y); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x - 10, y - 16); ctx.lineTo(x + 10, y - 16); ctx.closePath(); ctx.fill();
-      ctx.fillStyle = 'rgba(255,255,255,0.9)'; ctx.fillRect(x + 16, y - 24, lineW - 18, 21);
-      ctx.fillStyle = col; ctx.fillText(txt, x + 20, y - 7); ctx.restore();
-    }
-
-    function drawCompassSymbol(ctx, obj) {
-      const col = obj.color || '#0f172a', { x1, y1, x2, y2 } = obj;
-      const r = Math.max(28, Math.min(70, Math.hypot(x2 - x1, y2 - y1) || 38));
-      const ang = (Math.hypot(x2 - x1, y2 - y1) < 5) ? -Math.PI / 2 : Math.atan2(y2 - y1, x2 - x1);
-      ctx.save(); ctx.translate(x1, y1); ctx.rotate(ang + Math.PI / 2);
-      ctx.fillStyle = 'rgba(255,255,255,0.94)'; ctx.strokeStyle = col; ctx.lineWidth = 3;
-      ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-      ctx.fillStyle = '#dc2626';
-      ctx.beginPath(); ctx.moveTo(0, -r + 4); ctx.lineTo(10, 4); ctx.lineTo(0, -2); ctx.lineTo(-10, 4); ctx.closePath(); ctx.fill();
-      ctx.strokeStyle = col; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.moveTo(0, r - 4); ctx.lineTo(8, 2); ctx.lineTo(-8, 2); ctx.closePath(); ctx.stroke();
-      ctx.fillStyle = '#dc2626'; ctx.font = 'bold 18px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('N', 0, -r - 6);
+      ctx.setLineDash(dashArr);
+      ctx.strokeRect(x, y, w, h);
       ctx.restore();
     }
 
@@ -2977,11 +3155,19 @@
       ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = Math.max(2, sw * 0.78);
       ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.setLineDash([]);
       if (type === 'circle') { ctx.beginPath(); ctx.arc(0, 0, s * 0.42, 0, Math.PI * 2); ctx.fill(); }
+      else if (type === 'open_circle') { ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(0, 0, s * 0.44, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); }
       else if (type === 'square') { ctx.fillRect(-s * 0.4, -s * 0.4, s * 0.8, s * 0.8); }
+      else if (type === 'diamond') { ctx.beginPath(); ctx.moveTo(s * 0.35, 0); ctx.lineTo(0, -s * 0.45); ctx.lineTo(-s * 0.55, 0); ctx.lineTo(0, s * 0.45); ctx.closePath(); ctx.fill(); }
       else if (type === 'dot') { ctx.beginPath(); ctx.arc(0, 0, Math.max(3.5, sw * 0.95), 0, Math.PI * 2); ctx.fill(); }
       else if (type === 'filled') { ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-s * 1.15, -s * 0.54); ctx.lineTo(-s * 1.15, s * 0.54); ctx.closePath(); ctx.fill(); }
       else if (type === 'open') { ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-s * 1.15, -s * 0.54); ctx.lineTo(-s * 1.15, s * 0.54); ctx.closePath(); ctx.fill(); ctx.stroke(); }
       else if (type === 'sharp') { ctx.beginPath(); ctx.moveTo(-s, -s * 0.56); ctx.lineTo(0, 0); ctx.lineTo(-s, s * 0.56); ctx.stroke(); }
+      else if (type === 'stealth') { ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-s * 1.3, -s * 0.58); ctx.lineTo(-s * 0.9, 0); ctx.lineTo(-s * 1.3, s * 0.58); ctx.closePath(); ctx.fill(); }
+      else if (type === 'harpoon') { ctx.beginPath(); ctx.moveTo(-s * 1.2, -s * 0.55); ctx.lineTo(0, 0); ctx.lineTo(-s * 0.75, 0); ctx.stroke(); }
+      else if (type === 'double_arrow') {
+        ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-s * 0.85, -s * 0.48); ctx.lineTo(-s * 0.85, s * 0.48); ctx.closePath(); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(-s * 0.72, 0); ctx.lineTo(-s * 1.55, -s * 0.48); ctx.lineTo(-s * 1.55, s * 0.48); ctx.closePath(); ctx.fill();
+      }
       else if (type === 'arch_tick') { ctx.beginPath(); ctx.moveTo(-s * 0.42, s * 0.68); ctx.lineTo(s * 0.42, -s * 0.68); ctx.stroke(); }
       else if (type === 'bar') { ctx.beginPath(); ctx.moveTo(0, -s * 0.75); ctx.lineTo(0, s * 0.75); ctx.stroke(); }
       ctx.restore();
@@ -2995,11 +3181,351 @@
       const step = 16;
       if (pat === 'diag45' || pat === 'cross') for (let d = -h; d < w + h; d += step) { ctx.beginPath(); ctx.moveTo(x + d, y + h); ctx.lineTo(x + d + h, y); ctx.stroke(); }
       if (pat === 'diag135' || pat === 'cross') for (let d = -h; d < w + h; d += step) { ctx.beginPath(); ctx.moveTo(x + d, y); ctx.lineTo(x + d + h, y + h); ctx.stroke(); }
-      if (pat === 'grid') {
-        for (let gx = x; gx <= x + w; gx += step) { ctx.beginPath(); ctx.moveTo(gx, y); ctx.lineTo(gx, y + h); ctx.stroke(); }
+      if (pat === 'grid' || pat === 'horiz') {
         for (let gy = y; gy <= y + h; gy += step) { ctx.beginPath(); ctx.moveTo(x, gy); ctx.lineTo(x + w, gy); ctx.stroke(); }
       }
-      if (pat === 'dots' || pat === 'concrete') for (let gx = x + 8; gx < x + w; gx += step) for (let gy = y + 8; gy < y + h; gy += step) { ctx.beginPath(); ctx.arc(gx, gy, 2.2, 0, Math.PI * 2); ctx.fill(); }
+      if (pat === 'grid' || pat === 'vert') {
+        for (let gx = x; gx <= x + w; gx += step) { ctx.beginPath(); ctx.moveTo(gx, y); ctx.lineTo(gx, y + h); ctx.stroke(); }
+      }
+      if (pat === 'brick') {
+        const bh = 16, bw = 32;
+        let rowIdx = 0;
+        for (let gy = y; gy <= y + h; gy += bh) {
+          ctx.beginPath(); ctx.moveTo(x, gy); ctx.lineTo(x + w, gy); ctx.stroke();
+          const offX = (rowIdx % 2) * (bw / 2);
+          for (let gx = x + offX; gx <= x + w; gx += bw) {
+            ctx.beginPath(); ctx.moveTo(gx, gy); ctx.lineTo(gx, gy + bh); ctx.stroke();
+          }
+          rowIdx++;
+        }
+      }
+      if (pat === 'insulation') {
+        const amp = 8, pitch = 14;
+        for (let gy = y + 12; gy < y + h; gy += 24) {
+          ctx.beginPath();
+          ctx.moveTo(x, gy);
+          let dir = 1;
+          for (let gx = x + pitch / 2; gx <= x + w + pitch; gx += pitch / 2) {
+            ctx.lineTo(gx, gy + dir * amp);
+            dir = -dir;
+          }
+          ctx.stroke();
+        }
+      }
+      if (pat === 'dots') {
+        for (let gx = x + 8; gx < x + w; gx += step) for (let gy = y + 8; gy < y + h; gy += step) { ctx.beginPath(); ctx.arc(gx, gy, 2.2, 0, Math.PI * 2); ctx.fill(); }
+      }
+      if (pat === 'concrete') {
+        for (let gx = x + 10; gx < x + w; gx += 26) {
+          for (let gy = y + 10; gy < y + h; gy += 26) {
+            ctx.beginPath(); ctx.arc(gx, gy, 2, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.moveTo(gx + 8, gy + 4); ctx.lineTo(gx + 15, gy + 2); ctx.lineTo(gx + 11, gy + 10); ctx.closePath(); ctx.stroke();
+          }
+        }
+      }
+      ctx.restore();
+    }
+
+    function drawDimensionObject(ctx, obj) {
+      const col = obj.color || '#2563eb', sw = obj.strokeWidth || 3.5;
+      const { x1, y1, x2, y2 } = obj;
+      const ang = Math.atan2(y2 - y1, x2 - x1);
+      const nx = -Math.sin(ang), ny = Math.cos(ang);
+      const extStyle = obj.dimExtStyle || 'tick_short';
+
+      // 補助線（Extension lines）描画
+      if (extStyle !== 'none_ext') {
+        const extLen = extStyle === 'tick_long' || extStyle === 'bar_ext' ? 28 : 16;
+        const over = 6;
+        ctx.save();
+        ctx.strokeStyle = col;
+        ctx.lineWidth = Math.max(1.5, sw * 0.55);
+        if (extStyle === 'center_ext') ctx.setLineDash([12, 4, 2, 4]);
+        else ctx.setLineDash([]);
+        ctx.beginPath();
+        ctx.moveTo(x1 - nx * over, y1 - ny * over);
+        ctx.lineTo(x1 + nx * extLen, y1 + ny * extLen);
+        ctx.moveTo(x2 - nx * over, y2 - ny * over);
+        ctx.lineTo(x2 + nx * extLen, y2 + ny * extLen);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      // 寸法主線
+      const dashArr = resolveDashArray(obj.lineStyle, obj.dashPattern, sw);
+      ctx.save();
+      ctx.setLineDash(dashArr);
+      ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+      ctx.restore();
+
+      // 端点マーカー（補助線種別連動）
+      if (extStyle === 'arrow_out') {
+        drawArrowHead(ctx, 'filled', x1, y1, ang + Math.PI, col, sw);
+        drawArrowHead(ctx, 'filled', x2, y2, ang, col, sw);
+      } else if (extStyle === 'arrow_in') {
+        drawArrowHead(ctx, 'filled', x1, y1, ang, col, sw);
+        drawArrowHead(ctx, 'filled', x2, y2, ang + Math.PI, col, sw);
+      } else if (extStyle === 'open_arrow') {
+        drawArrowHead(ctx, 'open', x1, y1, ang + Math.PI, col, sw);
+        drawArrowHead(ctx, 'open', x2, y2, ang, col, sw);
+      } else if (extStyle === 'dot_ext') {
+        drawArrowHead(ctx, 'circle', x1, y1, ang, col, sw);
+        drawArrowHead(ctx, 'circle', x2, y2, ang, col, sw);
+      } else if (extStyle === 'circle_open') {
+        drawArrowHead(ctx, 'open_circle', x1, y1, ang, col, sw);
+        drawArrowHead(ctx, 'open_circle', x2, y2, ang, col, sw);
+      } else if (extStyle === 'bar_ext' || extStyle === 'center_ext') {
+        drawArrowHead(ctx, 'bar', x1, y1, ang, col, sw);
+        drawArrowHead(ctx, 'bar', x2, y2, ang, col, sw);
+      } else if (extStyle !== 'none_ext') {
+        drawArrowHead(ctx, 'arch_tick', x1, y1, ang + Math.PI, col, sw);
+        drawArrowHead(ctx, 'arch_tick', x2, y2, ang, col, sw);
+      }
+
+      // 寸法文字配置
+      const mx = (x1 + x2) / 2, my = (y1 + y2) / 2;
+      const pos = obj.textPos || 'center';
+      let lx = mx + (obj.labelOffsetX || 0), ly = my + (obj.labelOffsetY || 0);
+      if (!obj.labelOffsetX && !obj.labelOffsetY) {
+        if (pos === 'above') { lx += nx * -24; ly += ny * -24; }
+        else if (pos === 'below') { lx += nx * 24; ly += ny * 24; }
+        else if (pos === 'right') { lx = Math.max(x1, x2) + 52; ly = (x2 >= x1 ? y2 : y1); }
+        else if (pos === 'left') { lx = Math.min(x1, x2) - 52; ly = (x1 <= x2 ? y1 : y2); }
+      }
+      if (Math.hypot(lx - mx, ly - my) > 30) {
+        ctx.save(); ctx.setLineDash([4, 3]); ctx.lineWidth = 1.6;
+        ctx.beginPath(); ctx.moveTo(mx, my); ctx.lineTo(lx, ly); ctx.stroke(); ctx.restore();
+      }
+      const txt = (obj.text && obj.text.trim() !== '') ? obj.text : `${Math.round(Math.hypot(x2 - x1, y2 - y1) * 5)}mm`;
+      ctx.setLineDash([]); ctx.font = 'bold 20px sans-serif';
+      const tw = ctx.measureText(txt).width + 14;
+      ctx.fillStyle = '#ffffff'; ctx.fillRect(lx - tw / 2, ly - 15, tw, 26); ctx.strokeRect(lx - tw / 2, ly - 15, tw, 26);
+      ctx.fillStyle = col; ctx.textAlign = 'center'; ctx.fillText(txt, lx, ly + 5);
+      obj._labelCx = lx; obj._labelCy = ly;
+    }
+
+    function drawStyledTextObject(ctx, obj) {
+      const col = obj.color || '#dc2626';
+      const fSize = obj.fontSize || 26;
+      const txt = obj.text || '確認箇所';
+      const boxStyle = obj.boxStyle || 'none';
+      ctx.save();
+      ctx.font = `bold ${fSize}px sans-serif`;
+      const tw = Math.max(44, ctx.measureText(txt).width);
+      const padX = boxStyle === 'pill' ? 18 : 12;
+      const padY = 8;
+      const bx = obj.x - padX;
+      const by = obj.y - fSize - padY + 4;
+      const bw = tw + padX * 2;
+      const bh = fSize + padY * 2;
+      let textColor = col;
+
+      if (boxStyle === 'none') {
+        ctx.lineJoin = 'round'; ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(255,255,255,0.92)';
+        ctx.strokeText(txt, obj.x, obj.y);
+      } else if (boxStyle === 'solid') {
+        ctx.fillStyle = 'rgba(255,255,255,0.96)'; ctx.fillRect(bx, by, bw, bh);
+        ctx.strokeStyle = col; ctx.lineWidth = 2.5; ctx.strokeRect(bx, by, bw, bh);
+      } else if (boxStyle === 'double') {
+        ctx.fillStyle = 'rgba(255,255,255,0.96)'; ctx.fillRect(bx, by, bw, bh);
+        ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.strokeRect(bx, by, bw, bh);
+        ctx.strokeRect(bx + 4, by + 4, bw - 8, bh - 8);
+      } else if (boxStyle === 'dashed') {
+        ctx.fillStyle = 'rgba(255,255,255,0.96)'; ctx.fillRect(bx, by, bw, bh);
+        ctx.strokeStyle = col; ctx.lineWidth = 2.5; ctx.setLineDash([8, 5]); ctx.strokeRect(bx, by, bw, bh); ctx.setLineDash([]);
+      } else if (boxStyle === 'dotted') {
+        ctx.fillStyle = 'rgba(255,255,255,0.96)'; ctx.fillRect(bx, by, bw, bh);
+        ctx.strokeStyle = col; ctx.lineWidth = 2.8; ctx.setLineDash([3, 6]); ctx.strokeRect(bx, by, bw, bh); ctx.setLineDash([]);
+      } else if (boxStyle === 'pill') {
+        ctx.fillStyle = 'rgba(255,255,255,0.96)'; ctx.strokeStyle = col; ctx.lineWidth = 2.5;
+        ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(bx, by, bw, bh, bh / 2); else ctx.rect(bx, by, bw, bh);
+        ctx.fill(); ctx.stroke();
+      } else if (boxStyle === 'cloud') {
+        drawCloudShape(ctx, { x: bx - 4, y: by - 4, w: bw + 8, h: bh + 8, color: col, strokeWidth: 2.5, fillTint: true });
+        ctx.fillStyle = 'rgba(255,255,255,0.88)'; ctx.fillRect(bx + 2, by + 2, bw - 4, bh - 4);
+      } else if (boxStyle === 'zigzag') {
+        ctx.fillStyle = 'rgba(255,255,255,0.96)'; ctx.fillRect(bx, by, bw, bh);
+        strokeStyledRect(ctx, bx - 2, by - 2, bw + 4, bh + 4, 'zigzag', 2.4);
+      } else if (boxStyle === 'callout') {
+        ctx.fillStyle = 'rgba(255,255,255,0.97)'; ctx.strokeStyle = col; ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.moveTo(bx, by); ctx.lineTo(bx + bw, by); ctx.lineTo(bx + bw, by + bh);
+        ctx.lineTo(bx + 32, by + bh); ctx.lineTo(bx + 18, by + bh + 12); ctx.lineTo(bx + 16, by + bh);
+        ctx.lineTo(bx, by + bh); ctx.closePath(); ctx.fill(); ctx.stroke();
+      } else if (boxStyle === 'bracket') {
+        const arm = 12;
+        ctx.fillStyle = 'rgba(255,255,255,0.92)'; ctx.fillRect(bx, by, bw, bh);
+        ctx.strokeStyle = col; ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(bx, by + arm); ctx.lineTo(bx, by); ctx.lineTo(bx + arm, by);
+        ctx.moveTo(bx + bw - arm, by); ctx.lineTo(bx + bw, by); ctx.lineTo(bx + bw, by + arm);
+        ctx.moveTo(bx + bw, by + bh - arm); ctx.lineTo(bx + bw, by + bh); ctx.lineTo(bx + bw - arm, by + bh);
+        ctx.moveTo(bx + arm, by + bh); ctx.lineTo(bx, by + bh); ctx.lineTo(bx, by + bh - arm);
+        ctx.stroke();
+      } else if (boxStyle === 'badge') {
+        ctx.fillStyle = col;
+        ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(bx, by, bw, bh, 8); else ctx.rect(bx, by, bw, bh);
+        ctx.fill();
+        textColor = '#ffffff';
+      }
+
+      ctx.fillStyle = textColor;
+      ctx.fillText(txt, obj.x, obj.y);
+      ctx.restore();
+    }
+
+    function drawBreakLine(ctx, x1, y1, x2, y2, sw = 3.5) {
+      const dx = x2 - x1, dy = y2 - y1, len = Math.hypot(dx, dy);
+      if (len < 2) return;
+      const ang = Math.atan2(dy, dx);
+      const zigW = Math.min(28, len * 0.35);
+      const zigH = Math.max(10, sw * 3.2);
+      const mid = len / 2;
+      ctx.save();
+      ctx.translate(x1, y1);
+      ctx.rotate(ang);
+      ctx.setLineDash([]);
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      if (len > 24) {
+        ctx.lineTo(mid - zigW / 2, 0);
+        ctx.lineTo(mid - zigW / 6, -zigH);
+        ctx.lineTo(mid + zigW / 6, zigH);
+        ctx.lineTo(mid + zigW / 2, 0);
+      }
+      ctx.lineTo(len, 0);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawCameraSymbol(ctx, obj) {
+      const col = obj.color || '#dc2626';
+      const { x1, y1, x2, y2 } = obj;
+      const ang = Math.atan2(y2 - y1, x2 - x1);
+      const dist = Math.max(48, Math.hypot(x2 - x1, y2 - y1));
+      const fov = (34 * Math.PI) / 180;
+      ctx.save();
+      ctx.translate(x1, y1);
+      ctx.rotate(ang);
+      ctx.setLineDash([]);
+      ctx.fillStyle = col + '26';
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.arc(0, 0, dist, -fov, fov);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = col;
+      ctx.lineWidth = 2;
+      ctx.setLineDash([5, 4]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = '#ffffff';
+      ctx.strokeStyle = col;
+      ctx.lineWidth = 3;
+      ctx.fillRect(-15, -11, 24, 22);
+      ctx.strokeRect(-15, -11, 24, 22);
+      ctx.beginPath();
+      ctx.moveTo(9, -6);
+      ctx.lineTo(17, -10);
+      ctx.lineTo(17, 10);
+      ctx.lineTo(9, 6);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+
+      if (obj.text) {
+        ctx.save();
+        ctx.font = 'bold 18px sans-serif';
+        ctx.fillStyle = col;
+        ctx.textAlign = 'center';
+        ctx.fillText(obj.text, x1, y1 + 32);
+        ctx.restore();
+      }
+    }
+
+    function drawSlopeSymbol(ctx, obj) {
+      const col = obj.color || '#dc2626', sw = obj.strokeWidth || 3.5;
+      const { x1, y1, x2, y2 } = obj;
+      const ang = Math.atan2(y2 - y1, x2 - x1);
+      const len = Math.max(40, Math.hypot(x2 - x1, y2 - y1));
+      ctx.save();
+      ctx.setLineDash([]);
+      ctx.strokeStyle = col;
+      ctx.lineWidth = sw;
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
+      ctx.stroke();
+      drawArrowHead(ctx, 'filled', x2, y2, ang, col, sw);
+
+      const mx = (x1 + x2) / 2, my = (y1 + y2) / 2;
+      const nx = -Math.sin(ang), ny = Math.cos(ang);
+      const txt = obj.text || '1/100';
+      ctx.font = 'bold 19px sans-serif';
+      ctx.fillStyle = col;
+      ctx.textAlign = 'center';
+      ctx.fillText(txt, mx + nx * -16, my + ny * -16);
+      ctx.restore();
+    }
+
+    function drawLevelSymbol(ctx, obj) {
+      const col = obj.color || '#dc2626';
+      const { x, y } = obj;
+      const txt = obj.text || 'GL±0';
+      ctx.save();
+      ctx.setLineDash([]);
+      ctx.strokeStyle = col;
+      ctx.fillStyle = '#ffffff';
+      ctx.lineWidth = 2.8;
+      ctx.beginPath();
+      ctx.moveTo(x - 16, y);
+      ctx.lineTo(x + 96, y);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x - 10, y - 16);
+      ctx.lineTo(x + 10, y - 16);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = col;
+      ctx.font = 'bold 19px sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText(txt, x + 16, y - 5);
+      ctx.restore();
+    }
+
+    function drawCompassSymbol(ctx, obj) {
+      const col = obj.color || '#0f172a';
+      const { x1, y1, x2, y2 } = obj;
+      const r = Math.max(32, Math.hypot(x2 - x1, y2 - y1));
+      const ang = Math.hypot(x2 - x1, y2 - y1) < 8 ? -Math.PI / 2 : Math.atan2(y2 - y1, x2 - x1);
+      ctx.save();
+      ctx.translate(x1, y1);
+      ctx.rotate(ang + Math.PI / 2);
+      ctx.setLineDash([]);
+      ctx.strokeStyle = col;
+      ctx.fillStyle = '#ffffff';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.arc(0, 0, r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = '#dc2626';
+      ctx.beginPath();
+      ctx.moveTo(0, -r + 4);
+      ctx.lineTo(-9, 4);
+      ctx.lineTo(0, -3);
+      ctx.lineTo(9, 4);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = col;
+      ctx.font = 'bold 17px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('N', 0, r - 8);
       ctx.restore();
     }
 
@@ -3069,35 +3595,60 @@
 
       list.forEach((obj, idx) => {
         const col = obj.color || '#dc2626', sw = obj.strokeWidth || 4, ls = obj.lineStyle || 'solid', gap = obj.gap || state.parallelGap || 22;
+        const dashArr = resolveDashArray(ls, obj.dashPattern, sw);
         ctx.save();
         ctx.globalAlpha = (typeof obj.opacity === 'number' ? obj.opacity : 100) / 100;
         ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = sw; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-        if (ls === 'dashed') ctx.setLineDash([sw * 3.5, sw * 2.2]);
-        else if (ls === 'dotted') ctx.setLineDash([sw, sw * 2.2]);
-        else if (ls === 'dashdot') ctx.setLineDash([sw * 4.5, sw * 2, sw, sw * 2]);
-        else ctx.setLineDash([]);
+        ctx.setLineDash(dashArr);
 
         if (obj.type === 'pen' && Array.isArray(obj.points)) {
-          if (ls === 'wavy' && obj.points.length > 1) {
-            for (let i = 0; i + 1 < obj.points.length; i++) strokeStyledSegment(ctx, obj.points[i].x, obj.points[i].y, obj.points[i + 1].x, obj.points[i + 1].y, 'wavy', sw);
+          if (['wavy', 'zigzag', 'scallop'].includes(ls) && obj.points.length > 1) {
+            for (let i = 0; i + 1 < obj.points.length; i++) strokeStyledSegment(ctx, obj.points[i].x, obj.points[i].y, obj.points[i + 1].x, obj.points[i + 1].y, ls, sw, gap, dashArr);
           } else {
             ctx.beginPath(); obj.points.forEach((p, i) => (i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y))); ctx.stroke();
           }
         } else if (obj.type === 'polyline' && Array.isArray(obj.points) && obj.points.length > 0) {
-          ctx.beginPath(); obj.points.forEach((p, i) => (i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y)));
-          if (obj.closed) { ctx.closePath(); if (obj.fillTint) { ctx.fillStyle = col + '1c'; ctx.fill(); } }
-          ctx.stroke();
+          const pts = obj.points;
+          if (obj.closed && pts.length >= 3 && obj.fillTint) {
+            ctx.beginPath();
+            pts.forEach((p, i) => (i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y)));
+            ctx.closePath();
+            ctx.fillStyle = col + '1c';
+            ctx.fill();
+          }
+          for (let i = 0; i + 1 < pts.length; i++) {
+            strokeStyledSegment(ctx, pts[i].x, pts[i].y, pts[i + 1].x, pts[i + 1].y, ls, sw, gap, dashArr);
+          }
+          if (obj.closed && pts.length >= 3) {
+            strokeStyledSegment(ctx, pts[pts.length - 1].x, pts[pts.length - 1].y, pts[0].x, pts[0].y, ls, sw, gap, dashArr);
+          } else if (!obj.closed && pts.length >= 2 && obj !== state.buildingPoly) {
+            const angStart = Math.atan2(pts[0].y - pts[1].y, pts[0].x - pts[1].x);
+            const angEnd = Math.atan2(pts[pts.length - 1].y - pts[pts.length - 2].y, pts[pts.length - 1].x - pts[pts.length - 2].x);
+            drawArrowHead(ctx, obj.arrowStart || 'none', pts[0].x, pts[0].y, angStart, col, sw);
+            drawArrowHead(ctx, obj.arrowEnd || 'none', pts[pts.length - 1].x, pts[pts.length - 1].y, angEnd, col, sw);
+          }
           if (obj === state.buildingPoly) {
+            if (state.polyHoverPt && pts.length > 0) {
+              const lastP = pts[pts.length - 1];
+              ctx.save();
+              ctx.globalAlpha = 0.55;
+              strokeStyledSegment(ctx, lastP.x, lastP.y, state.polyHoverPt.x, state.polyHoverPt.y, ls, sw, gap, dashArr);
+              ctx.restore();
+            }
             ctx.setLineDash([]);
-            obj.points.forEach((p, pi) => { ctx.fillStyle = pi === 0 ? '#10b981' : '#38bdf8'; ctx.beginPath(); ctx.arc(p.x, p.y, 7, 0, Math.PI * 2); ctx.fill(); });
+            pts.forEach((p, pi) => {
+              ctx.fillStyle = pi === 0 ? '#10b981' : '#38bdf8';
+              ctx.beginPath(); ctx.arc(p.x, p.y, pi === 0 ? 9 : 7, 0, Math.PI * 2); ctx.fill();
+              ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2; ctx.stroke();
+            });
           }
         } else if (obj.type === 'parallel') {
-          strokeStyledSegment(ctx, obj.x1, obj.y1, obj.x2, obj.y2, 'double', sw, gap);
+          strokeStyledSegment(ctx, obj.x1, obj.y1, obj.x2, obj.y2, 'double', sw, gap, dashArr);
           const ang = Math.atan2(obj.y2 - obj.y1, obj.x2 - obj.x1);
           drawArrowHead(ctx, obj.arrowStart || 'none', obj.x1, obj.y1, ang + Math.PI, col, sw);
           drawArrowHead(ctx, obj.arrowEnd || 'none', obj.x2, obj.y2, ang, col, sw);
         } else if (obj.type === 'line' || obj.type === 'arrow') {
-          strokeStyledSegment(ctx, obj.x1, obj.y1, obj.x2, obj.y2, ls, sw, gap);
+          strokeStyledSegment(ctx, obj.x1, obj.y1, obj.x2, obj.y2, ls, sw, gap, dashArr);
           const ang = Math.atan2(obj.y2 - obj.y1, obj.x2 - obj.x1);
           drawArrowHead(ctx, obj.arrowStart || 'none', obj.x1, obj.y1, ang + Math.PI, col, sw);
           drawArrowHead(ctx, obj.arrowEnd || (obj.type === 'arrow' ? 'filled' : 'none'), obj.x2, obj.y2, ang, col, sw);
@@ -3117,30 +3668,7 @@
           ctx.fillStyle = col; ctx.font = 'bold 21px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
           ctx.fillText(obj.text || '①', obj.x, obj.y + 1); ctx.textBaseline = 'alphabetic'; ctx.textAlign = 'left';
         } else if (obj.type === 'dimension') {
-          ctx.beginPath(); ctx.moveTo(obj.x1, obj.y1); ctx.lineTo(obj.x2, obj.y2); ctx.stroke();
-          const ang = Math.atan2(obj.y2 - obj.y1, obj.x2 - obj.x1);
-          drawArrowHead(ctx, 'arch_tick', obj.x1, obj.y1, ang + Math.PI, col, sw);
-          drawArrowHead(ctx, 'arch_tick', obj.x2, obj.y2, ang, col, sw);
-          const mx = (obj.x1 + obj.x2) / 2, my = (obj.y1 + obj.y2) / 2;
-          const nx = -Math.sin(ang), ny = Math.cos(ang);
-          const pos = obj.textPos || 'center';
-          let lx = mx + (obj.labelOffsetX || 0), ly = my + (obj.labelOffsetY || 0);
-          if (!obj.labelOffsetX && !obj.labelOffsetY) {
-            if (pos === 'above') { lx += nx * -24; ly += ny * -24; }
-            else if (pos === 'below') { lx += nx * 24; ly += ny * 24; }
-            else if (pos === 'right') { lx = Math.max(obj.x1, obj.x2) + 52; ly = (obj.x2 >= obj.x1 ? obj.y2 : obj.y1); }
-            else if (pos === 'left') { lx = Math.min(obj.x1, obj.x2) - 52; ly = (obj.x1 <= obj.x2 ? obj.y1 : obj.y2); }
-          }
-          if (Math.hypot(lx - mx, ly - my) > 30) {
-            ctx.save(); ctx.setLineDash([4, 3]); ctx.lineWidth = 1.6;
-            ctx.beginPath(); ctx.moveTo(mx, my); ctx.lineTo(lx, ly); ctx.stroke(); ctx.restore();
-          }
-          const txt = (obj.text && obj.text.trim() !== '') ? obj.text : `${Math.round(Math.hypot(obj.x2 - obj.x1, obj.y2 - obj.y1) * 5)}mm`;
-          ctx.setLineDash([]); ctx.font = 'bold 20px sans-serif';
-          const tw = ctx.measureText(txt).width + 14;
-          ctx.fillStyle = '#ffffff'; ctx.fillRect(lx - tw / 2, ly - 15, tw, 26); ctx.strokeRect(lx - tw / 2, ly - 15, tw, 26);
-          ctx.fillStyle = col; ctx.textAlign = 'center'; ctx.fillText(txt, lx, ly + 5);
-          obj._labelCx = lx; obj._labelCy = ly;
+          drawDimensionObject(ctx, obj);
         } else if (obj.type === 'leader') {
           const dir = obj.x2 >= obj.x1 ? 1 : -1, txt = obj.text || '確認箇所';
           ctx.font = 'bold 22px sans-serif';
@@ -3156,13 +3684,13 @@
           drawCloudShape(ctx, obj);
         } else if (obj.type === 'rect') {
           if (obj.fillTint) { ctx.fillStyle = col + '1c'; ctx.fillRect(obj.x, obj.y, obj.w, obj.h); }
-          strokeStyledRect(ctx, obj.x, obj.y, obj.w, obj.h, ls, sw, gap);
+          strokeStyledRect(ctx, obj.x, obj.y, obj.w, obj.h, ls, sw, gap, dashArr);
         } else if (obj.type === 'roundrect') {
           ctx.beginPath();
           if (ctx.roundRect) ctx.roundRect(obj.x, obj.y, obj.w, obj.h, 24); else ctx.rect(obj.x, obj.y, obj.w, obj.h);
           if (obj.fillTint) { ctx.fillStyle = col + '1c'; ctx.fill(); }
           ctx.stroke();
-          if (ls === 'double' && Math.abs(obj.w) > 16 && Math.abs(obj.h) > 16) {
+          if ((ls === 'double' || ls === 'triple') && Math.abs(obj.w) > 16 && Math.abs(obj.h) > 16) {
             ctx.beginPath();
             if (ctx.roundRect) ctx.roundRect(obj.x + 6, obj.y + 6, obj.w - 12, obj.h - 12, 18); else ctx.rect(obj.x + 6, obj.y + 6, obj.w - 12, obj.h - 12);
             ctx.stroke();
@@ -3171,7 +3699,7 @@
           ctx.beginPath(); ctx.ellipse(obj.x + obj.w / 2, obj.y + obj.h / 2, Math.abs(obj.w) / 2, Math.abs(obj.h) / 2, 0, 0, Math.PI * 2);
           if (obj.fillTint) { ctx.fillStyle = col + '1c'; ctx.fill(); }
           ctx.stroke();
-          if (ls === 'double' && Math.abs(obj.w) > 18 && Math.abs(obj.h) > 18) {
+          if ((ls === 'double' || ls === 'triple') && Math.abs(obj.w) > 18 && Math.abs(obj.h) > 18) {
             ctx.beginPath(); ctx.ellipse(obj.x + obj.w / 2, obj.y + obj.h / 2, Math.abs(obj.w) / 2 - 6, Math.abs(obj.h) / 2 - 6, 0, 0, Math.PI * 2); ctx.stroke();
           }
         } else if (obj.type === 'hatch') {
@@ -3202,8 +3730,7 @@
             curY += rh;
           });
         } else if (obj.type === 'text') {
-          ctx.setLineDash([]); ctx.font = `bold ${obj.fontSize || 26}px sans-serif`; ctx.fillStyle = col;
-          ctx.fillText(obj.text || '確認箇所', obj.x, obj.y);
+          drawStyledTextObject(ctx, obj);
         } else if (['image', 'pdf', 'dxf'].includes(obj.type)) {
           if (obj._img) ctx.drawImage(obj._img, obj.x, obj.y, obj.w, obj.h);
           else if (obj.dataUrl) {
@@ -3222,7 +3749,14 @@
           ctx.strokeRect(b.x - 5, b.y - 5, b.w + 10, b.h + 10);
 
           if (selSet.size === 1 && isPrimary) {
-            if (['line', 'parallel', 'arrow', 'leader', 'dimension', 'camera', 'breakline', 'slope', 'compass'].includes(obj.type)) {
+            if (obj.type === 'polyline' && Array.isArray(obj.points)) {
+              ctx.setLineDash([]);
+              obj.points.forEach((vp, vi) => {
+                ctx.fillStyle = vi === 0 ? '#2563eb' : (vi === obj.points.length - 1 ? '#dc2626' : '#0284c7');
+                ctx.beginPath(); ctx.arc(vp.x, vp.y, 10, 0, Math.PI * 2); ctx.fill();
+                ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2.5; ctx.stroke();
+              });
+            } else if (['line', 'parallel', 'arrow', 'leader', 'dimension', 'camera', 'breakline', 'slope', 'compass'].includes(obj.type)) {
               ctx.setLineDash([]);
               ctx.fillStyle = '#2563eb'; ctx.beginPath(); ctx.arc(obj.x1, obj.y1, 11, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2.5; ctx.stroke();
               ctx.fillStyle = '#dc2626'; ctx.beginPath(); ctx.arc(obj.x2, obj.y2, 11, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2.5; ctx.stroke();
@@ -3366,8 +3900,11 @@
                 pushUndoSnapshot();
                 state.dragMode = 'group-resize';
                 state.resizeCorner = hitGc.id;
-                state.origBox = { x: gb.x, y: gb.y, w: gb.w, h: gb.h };
-                state.origGroupItems = selList.map(i => ({ idx: i, snap: JSON.parse(JSON.stringify(serializeObjects([state.objects[i]])[0])) }));
+                state.origBox = { ...gb };
+                state.origGroupItems = selList.map(idx => ({
+                  idx,
+                  snap: JSON.parse(JSON.stringify(serializeObjects([state.objects[idx]])[0]))
+                }));
                 return;
               }
             }
@@ -3375,6 +3912,15 @@
 
           if (selList.length === 1 && state.selectedIndex >= 0) {
             const sel = state.objects[state.selectedIndex];
+            if (sel && sel.type === 'polyline' && Array.isArray(sel.points)) {
+              const hitVi = sel.points.findIndex(vp => Math.hypot(pt.x - vp.x, pt.y - vp.y) <= 20);
+              if (hitVi >= 0) {
+                pushUndoSnapshot();
+                state.dragMode = 'poly-vertex';
+                state.resizeCorner = hitVi;
+                return;
+              }
+            }
             if (sel && sel.type === 'dimension' && typeof sel._labelCx === 'number' && Math.hypot(pt.x - sel._labelCx, pt.y - (sel._labelCy - 18)) <= 20) {
               pushUndoSnapshot();
               state.dragMode = 'dim-label';
@@ -3459,18 +4005,25 @@
           if (!state.buildingPoly) {
             state.buildingPoly = {
               type: 'polyline', points: [pt], closed: false, color: state.color,
-              opacity: state.opacity ?? 100, strokeWidth: state.strokeWidth, lineStyle: state.lineStyle, fillTint: state.fillTint
+              opacity: state.opacity ?? 100, strokeWidth: state.strokeWidth, lineStyle: state.lineStyle,
+              dashPattern: state.dashPattern, gap: state.parallelGap || 22,
+              arrowStart: state.arrowStart, arrowEnd: state.arrowEnd, fillTint: state.fillTint
             };
+            state.polyHoverPt = pt;
             syncToolUi(); renderCanvas();
-            showToast('クリックで頂点追加（緑点クリックまたはダブルクリックで確定）');
+            showToast('クリックで連続線を追加（緑の始点クリックで多角形化／ダブルクリック・Enterで確定）');
           } else {
             const first = state.buildingPoly.points[0];
-            if (state.buildingPoly.points.length >= 3 && Math.hypot(pt.x - first.x, pt.y - first.y) <= 18) {
+            const last = state.buildingPoly.points[state.buildingPoly.points.length - 1];
+            const nextPt = state.polyHoverPt || pt;
+            if (state.buildingPoly.points.length >= 3 && Math.hypot(nextPt.x - first.x, nextPt.y - first.y) <= 20) {
               state.buildingPoly.closed = true;
               finishCurrentPolyline();
+            } else if (state.buildingPoly.points.length >= 2 && Math.hypot(nextPt.x - last.x, nextPt.y - last.y) <= 8) {
+              finishCurrentPolyline();
             } else {
-              state.buildingPoly.points.push(pt);
-              renderCanvas();
+              state.buildingPoly.points.push({ x: nextPt.x, y: nextPt.y });
+              syncToolUi(); renderCanvas();
             }
           }
           return;
@@ -3500,7 +4053,7 @@
 
         if (state.tool === 'text') {
           pushUndoSnapshot();
-          state.objects.push({ type: 'text', x: pt.x, y: pt.y, text: labelText, color: state.color, opacity: state.opacity ?? 100, fontSize: 26 });
+          state.objects.push({ type: 'text', x: pt.x, y: pt.y, text: labelText, boxStyle: state.textBoxStyle || 'none', color: state.color, opacity: state.opacity ?? 100, fontSize: 26 });
           selectSingleIndexWithGroup(state.objects.length - 1);
           state.tool = 'select'; state.dragging = false; state.activeSnapPt = null;
           syncToolUi(); renderCanvas(); autoSaveCanvas();
@@ -3510,13 +4063,14 @@
         pushUndoSnapshot();
         state.dragMode = 'draw';
         if (state.tool === 'pen') {
-          state.currentObj = { type: 'pen', points: [pt], color: state.color, opacity: state.opacity ?? 100, strokeWidth: state.strokeWidth, lineStyle: state.lineStyle };
+          state.currentObj = { type: 'pen', points: [pt], color: state.color, opacity: state.opacity ?? 100, strokeWidth: state.strokeWidth, lineStyle: state.lineStyle, dashPattern: state.dashPattern };
         } else if (['line', 'parallel', 'arrow', 'dimension', 'camera', 'breakline', 'slope', 'compass'].includes(state.tool)) {
           state.currentObj = {
             type: state.tool, x1: pt.x, y1: pt.y, x2: pt.x, y2: pt.y,
             textPos: state.tool === 'dimension' ? (state.dimTextPos || 'center') : undefined,
+            dimExtStyle: state.tool === 'dimension' ? (state.dimExtStyle || 'tick_short') : undefined,
             text: state.tool === 'slope' && labelText === '確認箇所' ? '1/100' : (state.tool === 'camera' && labelText === '確認箇所' ? '撮影①' : (state.tool === 'dimension' ? '' : labelText)),
-            color: state.color, opacity: state.opacity ?? 100, strokeWidth: state.strokeWidth, lineStyle: state.lineStyle,
+            color: state.color, opacity: state.opacity ?? 100, strokeWidth: state.strokeWidth, lineStyle: state.lineStyle, dashPattern: state.dashPattern,
             gap: state.parallelGap || 22, arrowStart: state.arrowStart,
             arrowEnd: state.tool === 'arrow' && state.arrowEnd === 'none' ? 'filled' : state.arrowEnd
           };
@@ -3524,12 +4078,12 @@
           state.currentObj = {
             type: 'leader', x1: pt.x, y1: pt.y, x2: pt.x + 65, y2: pt.y - 50,
             text: labelText, color: state.color, opacity: state.opacity ?? 100, strokeWidth: state.strokeWidth,
-            lineStyle: state.lineStyle, arrowStart: state.arrowStart === 'none' ? 'filled' : state.arrowStart, arrowEnd: 'none'
+            lineStyle: state.lineStyle, dashPattern: state.dashPattern, arrowStart: state.arrowStart === 'none' ? 'filled' : state.arrowStart, arrowEnd: 'none'
           };
         } else {
           state.currentObj = {
             type: state.tool, x: pt.x, y: pt.y, w: 1, h: 1, color: state.color,
-            opacity: state.opacity ?? 100, strokeWidth: state.strokeWidth, lineStyle: state.lineStyle,
+            opacity: state.opacity ?? 100, strokeWidth: state.strokeWidth, lineStyle: state.lineStyle, dashPattern: state.dashPattern,
             gap: state.parallelGap || 14, hatchPattern: state.hatchPattern, fillTint: state.fillTint
           };
         }
@@ -3542,6 +4096,18 @@
         if (coordLbl) coordLbl.textContent = `X: ${rawPt.x}  Y: ${rawPt.y}`;
 
         if (!state.dragging) {
+          if (state.tool === 'polyline' && state.buildingPoly && state.buildingPoly.points.length > 0) {
+            const snappedPos = snapPointToGeometry(rawPt);
+            const lastP = state.buildingPoly.points[state.buildingPoly.points.length - 1];
+            const angRes = state.activeSnapPt
+              ? { x: snappedPos.x, y: snappedPos.y, deg: Math.round(((Math.atan2(snappedPos.y - lastP.y, snappedPos.x - lastP.x) * 180) / Math.PI + 360) % 360), len: Math.round(Math.hypot(snappedPos.x - lastP.x, snappedPos.y - lastP.y)), snapMode: 'snap' }
+              : applySnapAngle(lastP.x, lastP.y, snappedPos.x, snappedPos.y, state.angleSnap, e.shiftKey);
+            state.polyHoverPt = { x: angRes.x, y: angRes.y };
+            const tag = angRes.snapMode === '90' ? ' [90°]' : (angRes.snapMode === '15' ? ' [15°]' : '');
+            state.hudText = `${angRes.deg}° / ${angRes.len}px${tag}`;
+            renderCanvas();
+            return;
+          }
           if (state.snapEnabled && state.tool !== 'select') {
             const prev = state.activeSnapPt;
             snapPointToGeometry(rawPt);
@@ -3617,19 +4183,35 @@
             } else if (target.type === 'balloon' || target.type === 'level') {
               target.x = Math.round(nx + (snap.x - state.origBox.x) * sx);
               target.y = Math.round(ny + (snap.y - state.origBox.y) * sy);
-            } else if (target.type === 'table') {
-              target.x = Math.round(nx + (snap.x - state.origBox.x) * sx);
-              target.y = Math.round(ny + (snap.y - state.origBox.y) * sy);
-              if (Array.isArray(snap.colWidths)) target.colWidths = snap.colWidths.map(cw => Math.max(36, Math.round(cw * sx)));
-              if (Array.isArray(snap.rowHeights)) target.rowHeights = snap.rowHeights.map(rh => Math.max(24, Math.round(rh * sy)));
             } else {
               target.x = Math.round(nx + (snap.x - state.origBox.x) * sx);
               target.y = Math.round(ny + (snap.y - state.origBox.y) * sy);
-              target.w = Math.max(20, Math.round((snap.w || 60) * sx));
-              target.h = Math.max(20, Math.round((snap.h || 60) * sy));
+              if (typeof snap.w === 'number') target.w = Math.max(16, Math.round(snap.w * sx));
+              if (typeof snap.h === 'number') target.h = Math.max(16, Math.round(snap.h * sy));
+              if (target.type === 'table' && Array.isArray(snap.colWidths) && Array.isArray(snap.rowHeights)) {
+                target.colWidths = snap.colWidths.map(cw => Math.max(36, Math.round(cw * sx)));
+                target.rowHeights = snap.rowHeights.map(rh => Math.max(24, Math.round(rh * sy)));
+                target.fontSize = Math.max(11, Math.min(44, Math.round((snap.fontSize || 20) * Math.min(sx, sy))));
+              }
             }
           });
           renderCanvas();
+          return;
+        }
+
+        if (state.dragMode === 'poly-vertex' && state.selectedIndex >= 0) {
+          const o = state.objects[state.selectedIndex];
+          const vi = state.resizeCorner;
+          if (o && o.type === 'polyline' && o.points?.[vi]) {
+            const anchor = o.points[vi > 0 ? vi - 1 : (vi + 1 < o.points.length ? vi + 1 : vi)];
+            const snapped = state.activeSnapPt
+              ? { x: pt.x, y: pt.y, deg: Math.round(((Math.atan2(pt.y - anchor.y, pt.x - anchor.x) * 180) / Math.PI + 360) % 360), len: Math.round(Math.hypot(pt.x - anchor.x, pt.y - anchor.y)), snapMode: 'snap' }
+              : applySnapAngle(anchor.x, anchor.y, pt.x, pt.y, state.angleSnap, e.shiftKey);
+            o.points[vi] = { x: snapped.x, y: snapped.y };
+            const tag = snapped.snapMode === '90' ? ' [90°]' : (snapped.snapMode === '15' ? ' [15°]' : '');
+            state.hudText = `${snapped.deg}° / ${snapped.len}px${tag}`;
+            renderCanvas();
+          }
           return;
         }
 
