@@ -575,6 +575,7 @@
           <div class="flex gap-1">
             <select id="dock-sample-cat" onchange="renderDockSampleQuickList()" class="flex-1 bg-[#18181a] border border-[#454549] rounded px-2 py-1 font-bold text-amber-300 outline-none cursor-pointer">
               <option value="all">すべて表示（100種）</option>
+              <option value="my">⭐ マイ豆図（登録済み）</option>
               <option value="struct">① 基礎・躯体・配筋（25種）</option>
               <option value="finish">② 開口・階段・防水・仕上（25種）</option>
               <option value="mep">③ 設備・配管・電気（24種）</option>
@@ -906,8 +907,25 @@
           <div id="preset-cards-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2"></div>
         </div>
 
-        <div class="pt-2 border-t border-[#3a3a3e]">
-          <div class="font-extrabold text-emerald-300 mb-2">2. ⭐ 保存済みマイ豆図一覧</div>
+        <div class="pt-2 border-t border-[#3a3a3e] space-y-2">
+          <div class="flex flex-wrap items-center justify-between gap-1.5">
+            <div class="font-extrabold text-emerald-300">2. ⭐ 保存済みマイ豆図一覧（ファイル・クラウド共有対応）</div>
+            <div class="flex flex-wrap items-center gap-1 text-[10px] font-extrabold">
+              <button onclick="exportAllMyMamezuJson()" class="px-2 py-1 bg-[#18181a] hover:bg-[#333336] border border-sky-600/70 text-sky-200 rounded-lg cursor-pointer" title="登録済みのマイ豆図をJSONファイルで書き出し（LINE・メール等で他端末へ共有可）">
+                📦 全件ファイル出力
+              </button>
+              <label class="relative overflow-hidden px-2 py-1 bg-[#18181a] hover:bg-[#333336] border border-amber-600/70 text-amber-200 rounded-lg cursor-pointer" title="他のスマホ・PCから送られたマイ豆図JSONを読み込み">
+                <span>📂 ファイル取込</span>
+                <input type="file" accept=".json,application/json" onchange="importMyMamezuJsonFile(event)" class="absolute inset-0 opacity-0 cursor-pointer" />
+              </label>
+              <button onclick="pushMyMamezuToCloud()" class="px-2 py-1 bg-cyan-800 hover:bg-cyan-700 text-white rounded-lg cursor-pointer" title="現在のマイ豆図一覧をクラウドサーバーへ共有保存">
+                ☁️ クラウド共有
+              </button>
+              <button onclick="pullMyMamezuFromCloud()" class="px-2 py-1 bg-emerald-800 hover:bg-emerald-700 text-white rounded-lg cursor-pointer" title="クラウドサーバー上のマイ豆図をこの端末へ取り込み">
+                ⬇️ クラウド取込
+              </button>
+            </div>
+          </div>
           <div id="my-mamezu-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-2"></div>
         </div>
       </div>
@@ -4475,44 +4493,77 @@
 
         const rawUrl = (cloudConfig.activeUrl || '').trim();
         const siteKey = (cloudConfig.activeSiteKey || '').trim();
-        if (rawUrl && siteKey) {
-          showToast('☁️ 写真台帳・測量野帳の共通クラウドへ豆図を送信中...');
-          const mediaId = `med_mz_${Date.now()}_${Math.random().toString(36).slice(2, 5)}`;
-          const fd = new FormData();
-          fd.append('file', dataUrlToBlobMz(pngDataUrl), `${mediaId}.png`);
-          fd.append('media_type', 'mamezu');
-          fd.append('media_id', mediaId);
-          fd.append('taken_at', `${title} (${nowStr})`);
-          fd.append('uploaded_by', '豆図スタジオPro');
-
-          const res = await fetch(`${rawUrl}/api/media/upload`, {
-            method: 'POST',
-            headers: { 'X-Site-Key': siteKey },
-            body: fd
-          });
-          const data = await res.json();
-          if (!res.ok || !data.ok) throw new Error(data.error || 'クラウド送信失敗');
+        if (!rawUrl || !siteKey) {
           closeModal('modal-send');
-          showToast('✅ 写真台帳・測量野帳へ豆図を送信しました！');
-        } else {
-          closeModal('modal-send');
-          showToast('💾 ローカルブリッジへ保存しました（写真台帳・野帳からすぐ取り込めます）');
+          showToast('💾 端末内ブリッジへ保存しました（他端末へ送る場合は「⚙️ URL設定」から同期サーバーURLと現場キーを設定してください）');
+          return;
         }
+
+        showToast('☁️ クラウドサーバー経由で写真台帳・野帳へ送信しています...');
+        const mediaId = `med_mz_studio_${Date.now()}`;
+        const fd = new FormData();
+        fd.append('file', dataUrlToBlobMz(pngDataUrl), `${mediaId}.png`);
+        fd.append('media_type', 'mamezu');
+        fd.append('media_id', mediaId);
+        fd.append('taken_at', `${title} (${nowStr})`);
+        fd.append('uploaded_by', '豆図スタジオPro');
+
+        const res = await fetch(`${rawUrl}/api/media/upload`, {
+          method: 'POST',
+          headers: { 'X-Site-Key': siteKey },
+          body: fd
+        });
+        const data = await res.json();
+        if (!res.ok || !data.ok) throw new Error(data.error || 'クラウド送信失敗');
+
+        closeModal('modal-send');
+        showToast('✅ クラウド経由で写真台帳 ＆ 測量野帳へ送信しました！');
       } catch (err) {
-        showToast(`⚠️ ローカル保存済／クラウド送信エラー: ${err.message}`);
+        showToast(`❌ クラウド送信エラー（ローカルには保存済）: ${err.message}`);
       } finally {
         if (btn) btn.disabled = false;
       }
     }
 
-    // ==================== 📚 略図雛形100種（外部JS連携） ＆ ⭐ マイ豆図 ====================
+    // ==================== 📚 略図雛形100種（外部JS連携） ＆ ⭐ マイ豆図（ファイル＆クラウド共有対応） ====================
     let modalPresetCategory = 'all';
     let pendingMyMzDeleteId = '';
+
+    function getMyMamezuList() {
+      try {
+        const list = JSON.parse(localStorage.getItem(STORAGE_KEY_MY_MAMEZU) || '[]');
+        return Array.isArray(list) ? list : [];
+      } catch (_) {
+        return [];
+      }
+    }
+
+    function setMyMamezuList(list) {
+      try {
+        localStorage.setItem(STORAGE_KEY_MY_MAMEZU, JSON.stringify((list || []).slice(0, 50)));
+      } catch (_) {}
+      renderDockSampleQuickList();
+    }
 
     function renderDockSampleQuickList() {
       const box = document.getElementById('dock-sample-quick-list');
       const cat = document.getElementById('dock-sample-cat')?.value || 'all';
       if (!box) return;
+      if (cat === 'my') {
+        const myList = getMyMamezuList();
+        if (myList.length === 0) {
+          box.innerHTML = `<div class="text-center text-slate-400 py-4 text-[10px]">登録済みのマイ豆図はまだありません（「一覧窓」から登録・読込できます）</div>`;
+          return;
+        }
+        box.innerHTML = myList.map(item => `
+          <button onclick="loadMyMamezu('${escapeHtml(item.id)}')"
+                  class="w-full px-2 py-1.5 rounded bg-[#18181a] hover:bg-emerald-950/80 border border-emerald-700/50 hover:border-emerald-400 text-left flex items-center justify-between gap-1 cursor-pointer">
+            <span class="font-bold text-emerald-200 truncate">⭐ ${escapeHtml(item.name)}</span>
+            <span class="text-[9px] text-emerald-400 shrink-0">呼出</span>
+          </button>
+        `).join('');
+        return;
+      }
       const presets = getPresetsCatalog100();
       if (presets.length === 0) {
         box.innerHTML = `<div class="text-center text-rose-300 py-4 text-[10px]">⚠️ mamezu_presets.js が見つかりません（同じフォルダに配置してください）</div>`;
@@ -4567,20 +4618,23 @@
 
       const mGrid = document.getElementById('my-mamezu-grid');
       if (mGrid) {
-        let myList = [];
-        try { myList = JSON.parse(localStorage.getItem(STORAGE_KEY_MY_MAMEZU) || '[]'); } catch (_) {}
-        if (myList.length === 0) { mGrid.innerHTML = `<div class="col-span-full text-center text-slate-400 py-4">保存済みのマイ豆図はまだありません。</div>`; return; }
+        const myList = getMyMamezuList();
+        if (myList.length === 0) {
+          mGrid.innerHTML = `<div class="col-span-full text-center text-slate-400 py-4">保存済みのマイ豆図はまだありません。上の「＋ 現在の豆図を登録」または「📂 ファイル取込」「⬇️ クラウド取込」から追加できます。</div>`;
+          return;
+        }
         mGrid.innerHTML = myList.map(item => {
           const isArmed = pendingMyMzDeleteId === item.id;
           return `
             <div class="p-2 rounded-xl bg-[#18181a] border border-[#3a3a3e] flex flex-col gap-1.5">
-              <div onclick="loadMyMamezu('${item.id}')" class="h-20 bg-white rounded-lg overflow-hidden flex items-center justify-center border border-slate-600 cursor-pointer">
-                <img src="${item.thumbUrl}" class="w-full h-full object-contain" />
+              <div onclick="loadMyMamezu('${escapeHtml(item.id)}')" class="h-20 bg-white rounded-lg overflow-hidden flex items-center justify-center border border-slate-600 cursor-pointer">
+                ${item.thumbUrl ? `<img src="${item.thumbUrl}" class="w-full h-full object-contain" />` : `<span class="text-slate-500 text-[10px]">ベクターデータ</span>`}
               </div>
               <div class="font-extrabold text-emerald-200 truncate">${escapeHtml(item.name)}</div>
               <div class="flex items-center gap-1">
-                <button onclick="loadMyMamezu('${item.id}')" class="flex-1 py-1 bg-emerald-700 hover:bg-emerald-600 text-white rounded-lg font-bold cursor-pointer">呼出</button>
-                <button onclick="deleteMyMamezu('${item.id}')" class="px-2 py-1 ${isArmed ? 'bg-rose-600 text-white' : 'bg-rose-950 hover:bg-rose-800 text-rose-200'} rounded-lg font-bold cursor-pointer">${isArmed ? '確定' : '削除'}</button>
+                <button onclick="loadMyMamezu('${escapeHtml(item.id)}')" class="flex-1 py-1 bg-emerald-700 hover:bg-emerald-600 text-white rounded-lg font-bold cursor-pointer">呼出</button>
+                <button onclick="exportSingleMyMamezuJson('${escapeHtml(item.id)}')" class="px-2 py-1 bg-sky-900 hover:bg-sky-700 text-sky-200 rounded-lg font-bold cursor-pointer" title="このマイ豆図1件を共有用JSONファイルで保存">📤</button>
+                <button onclick="deleteMyMamezu('${escapeHtml(item.id)}')" class="px-2 py-1 ${isArmed ? 'bg-rose-600 text-white' : 'bg-rose-950 hover:bg-rose-800 text-rose-200'} rounded-lg font-bold cursor-pointer">${isArmed ? '確定' : '削除'}</button>
               </div>
             </div>
           `;
@@ -4624,23 +4678,42 @@
       const inp = document.getElementById('inp-my-mamezu-name');
       const name = (inp?.value || '').trim() || document.getElementById('mz-doc-title')?.value || `マイ豆図 ${Date.now() % 1000}`;
       const thumbUrl = getCleanMamezuDataUrl(480, 280);
-      let myList = [];
-      try { myList = JSON.parse(localStorage.getItem(STORAGE_KEY_MY_MAMEZU) || '[]'); } catch (_) {}
-      myList.unshift({ id: `mymz_${Date.now()}`, name, thumbUrl, bgType: state.bgType, bgTintColor: state.bgTintColor, bgAlpha: state.bgAlpha, objects: serializeObjects(state.objects) });
-      localStorage.setItem(STORAGE_KEY_MY_MAMEZU, JSON.stringify(myList.slice(0, 30)));
+      const myList = getMyMamezuList();
+      myList.unshift({
+        id: `mymz_${Date.now()}_${Math.random().toString(36).slice(2, 5)}`,
+        name,
+        thumbUrl,
+        sizeKey: state.sizeKey || 'standard',
+        bgType: state.bgType,
+        bgTintColor: state.bgTintColor,
+        bgAlpha: state.bgAlpha,
+        objects: serializeObjects(state.objects),
+        updatedAt: Date.now()
+      });
+      setMyMamezuList(myList);
       if (inp) inp.value = '';
       renderPresetAndMyLists();
       showToast(`⭐ 「${name}」をマイ豆図に登録しました`);
     }
 
     function loadMyMamezu(id) {
-      let myList = [];
-      try { myList = JSON.parse(localStorage.getItem(STORAGE_KEY_MY_MAMEZU) || '[]'); } catch (_) {}
+      const myList = getMyMamezuList();
       const found = myList.find(x => x.id === id);
       if (!found) return;
       pushUndoSnapshot();
-      state.bgType = found.bgType || 'grid'; state.bgTintColor = found.bgTintColor || '#fef9c3'; state.bgAlpha = typeof found.bgAlpha === 'number' ? found.bgAlpha : 35;
-      state.objects = JSON.parse(JSON.stringify(found.objects || [])); state.selectedIndex = -1; state.selectedIndices = [];
+      if (found.sizeKey && CANVAS_SIZE_PRESETS[found.sizeKey]) {
+        state.sizeKey = found.sizeKey;
+        state.canvasW = CANVAS_SIZE_PRESETS[found.sizeKey].w;
+        state.canvasH = CANVAS_SIZE_PRESETS[found.sizeKey].h;
+        const canvas = document.getElementById('mamezu-main-canvas');
+        if (canvas) { canvas.width = state.canvasW; canvas.height = state.canvasH; }
+      }
+      state.bgType = found.bgType || 'grid';
+      state.bgTintColor = found.bgTintColor || '#fef9c3';
+      state.bgAlpha = typeof found.bgAlpha === 'number' ? found.bgAlpha : 35;
+      state.objects = JSON.parse(JSON.stringify(found.objects || []));
+      state.selectedIndex = -1;
+      state.selectedIndices = [];
       const titleInp = document.getElementById('mz-doc-title');
       if (titleInp) titleInp.value = found.name;
       syncToolUi(); renderCanvas(); autoSaveCanvas(); closeModal('modal-presets');
@@ -4655,55 +4728,249 @@
         return;
       }
       pendingMyMzDeleteId = '';
-      let myList = [];
-      try { myList = JSON.parse(localStorage.getItem(STORAGE_KEY_MY_MAMEZU) || '[]'); } catch (_) {}
-      localStorage.setItem(STORAGE_KEY_MY_MAMEZU, JSON.stringify(myList.filter(x => x.id !== id)));
+      setMyMamezuList(getMyMamezuList().filter(x => x.id !== id));
       renderPresetAndMyLists(); showToast('マイ豆図を削除しました');
     }
 
-    // ==================== ☁️ サーバー上の豆図一覧 ＆ 再編集・不要データ削除 ====================
-    let cloudPoolFilter = 'mamezu';
+    // ==================== 📦 マイ豆図 ファイル書き出し / 読み込み ＆ ☁️ クラウド共有 / 取込 ====================
+    function exportAllMyMamezuJson() {
+      const myList = getMyMamezuList();
+      if (myList.length === 0) {
+        showToast('書き出すマイ豆図がまだ登録されていません');
+        return;
+      }
+      const payload = {
+        format: 'mamezu_my_templates_v1',
+        exportedAt: new Date().toISOString(),
+        templates: myList
+      };
+      const ts = new Date().toISOString().replace(/[-:T]/g, '').slice(0, 12);
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' }));
+      a.download = `my_mamezu_templates_${ts}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      showToast(`📦 マイ豆図 ${myList.length}件を共有用JSONファイルで出力しました`);
+    }
+
+    function exportSingleMyMamezuJson(id) {
+      const found = getMyMamezuList().find(x => x.id === id);
+      if (!found) return;
+      const payload = {
+        format: 'mamezu_my_templates_v1',
+        exportedAt: new Date().toISOString(),
+        templates: [found]
+      };
+      const safeName = String(found.name || 'my_mamezu').replace(/[\\/:*?"<>|\s]+/g, '_').slice(0, 24);
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' }));
+      a.download = `mymamezu_${safeName}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      showToast(`📤 「${found.name}」の共有JSONファイルを出力しました`);
+    }
+
+    function mergeImportedMyMamezuItems(incomingList) {
+      const current = getMyMamezuList();
+      const map = new Map();
+      current.forEach(item => { if (item && item.id) map.set(item.id, item); });
+      let addedCount = 0;
+      (incomingList || []).forEach((raw, idx) => {
+        if (!raw || !Array.isArray(raw.objects)) return;
+        const itemId = raw.id || `mymz_imp_${Date.now()}_${idx}`;
+        map.set(itemId, {
+          id: itemId,
+          name: String(raw.name || raw.title || `取込マイ豆図 ${idx + 1}`),
+          thumbUrl: raw.thumbUrl || '',
+          sizeKey: raw.sizeKey || 'standard',
+          bgType: raw.bgType || 'grid',
+          bgTintColor: raw.bgTintColor || '#fef9c3',
+          bgAlpha: typeof raw.bgAlpha === 'number' ? raw.bgAlpha : 35,
+          objects: serializeObjects(raw.objects),
+          updatedAt: raw.updatedAt || Date.now()
+        });
+        addedCount++;
+      });
+      if (addedCount > 0) {
+        setMyMamezuList(Array.from(map.values()));
+        renderPresetAndMyLists();
+      }
+      return addedCount;
+    }
+
+    function importMyMamezuJsonFile(event) {
+      const file = event.target.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = e => {
+        try {
+          const parsed = JSON.parse(e.target.result);
+          let candidates = [];
+          if (Array.isArray(parsed?.templates)) {
+            candidates = parsed.templates;
+          } else if (Array.isArray(parsed)) {
+            candidates = parsed;
+          } else if (parsed && Array.isArray(parsed.objects)) {
+            candidates = [parsed];
+          }
+          const count = mergeImportedMyMamezuItems(candidates);
+          if (count === 0) throw new Error('有効なマイ豆図データが見つかりません');
+          showToast(`📂 マイ豆図 ${count}件を取り込みました！`);
+        } catch (err) {
+          showToast(`❌ ファイル取込エラー: ${err.message}`);
+        }
+      };
+      reader.readAsText(file);
+      event.target.value = '';
+    }
+
+    async function pushMyMamezuToCloud() {
+      const rawUrl = (cloudConfig.activeUrl || '').trim();
+      const siteKey = (cloudConfig.activeSiteKey || '').trim();
+      if (!rawUrl || !siteKey) {
+        showToast('先に「⚙️ URL設定」から同期サーバーURLと現場キーを設定してください');
+        closeModal('modal-presets');
+        openCloudModal();
+        return;
+      }
+      const myList = getMyMamezuList();
+      if (myList.length === 0) {
+        showToast('クラウドへ共有するマイ豆図が登録されていません');
+        return;
+      }
+      showToast('☁️ マイ豆図一覧をクラウドへ共有保存中...');
+      try {
+        // 既存の野帳ページ・一時保管データを消さないよう取得してマージ同期
+        let existingOtherPages = [];
+        try {
+          const getRes = await fetch(`${rawUrl}/api/fieldnote`, { headers: { 'X-Site-Key': siteKey } });
+          const getData = await getRes.json();
+          if (getRes.ok && getData.ok && Array.isArray(getData.pages)) {
+            existingOtherPages = getData.pages
+              .filter(pg => pg.notebook_id !== 'mamezu_my_templates')
+              .map(pg => ({
+                page_id: pg.page_id,
+                notebook_id: pg.notebook_id,
+                notebook_name: pg.notebook_name,
+                title: pg.title,
+                paper_format: pg.paper_format,
+                page_json: typeof pg.page_json === 'string' ? JSON.parse(pg.page_json) : pg.page_json
+              }));
+          }
+        } catch (_) {}
+
+        const myPages = myList.map(item => ({
+          page_id: item.id,
+          notebook_id: 'mamezu_my_templates',
+          notebook_name: 'マイ豆図テンプレート',
+          title: item.name,
+          paper_format: item.sizeKey || 'standard',
+          page_json: item
+        }));
+
+        const res = await fetch(`${rawUrl}/api/fieldnote/sync`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Site-Key': siteKey },
+          body: JSON.stringify({ pages: [...existingOtherPages, ...myPages] })
+        });
+        const data = await res.json();
+        if (!res.ok || !data.ok) throw new Error(data.error || 'クラウド保存失敗');
+        showToast(`☁️ マイ豆図 ${myList.length}件をクラウドへ共有しました（他端末で「⬇️ クラウド取込」を押すと使えます）`);
+      } catch (err) {
+        showToast(`❌ クラウド共有エラー: ${err.message}`);
+      }
+    }
+
+    async function pullMyMamezuFromCloud() {
+      const rawUrl = (cloudConfig.activeUrl || '').trim();
+      const siteKey = (cloudConfig.activeSiteKey || '').trim();
+      if (!rawUrl || !siteKey) {
+        showToast('先に「⚙️ URL設定」から同期サーバーURLと現場キーを設定してください');
+        closeModal('modal-presets');
+        openCloudModal();
+        return;
+      }
+      showToast('⬇️ クラウドからマイ豆図一覧を取得中...');
+      try {
+        const res = await fetch(`${rawUrl}/api/fieldnote`, { headers: { 'X-Site-Key': siteKey } });
+        const data = await res.json();
+        if (!res.ok || !data.ok) throw new Error(data.error || 'クラウド取得失敗');
+        const cloudMyItems = (data.pages || [])
+          .filter(pg => pg.notebook_id === 'mamezu_my_templates')
+          .map(pg => (typeof pg.page_json === 'string' ? JSON.parse(pg.page_json) : pg.page_json));
+
+        if (cloudMyItems.length === 0) {
+          showToast('クラウド上のこの現場キーには共有マイ豆図がまだありません');
+          return;
+        }
+        const count = mergeImportedMyMamezuItems(cloudMyItems);
+        showToast(`✅ クラウドからマイ豆図 ${count}件を取り込みました！`);
+      } catch (err) {
+        showToast(`❌ クラウド取込エラー: ${err.message}`);
+      }
+    }
+
+    // ==================== ☁️ サーバー豆図一覧・再編集・不要データ削除 ====================
     let cachedServerMedia = [];
+    let cloudPoolFilter = 'mamezu';
     let selectedCloudMediaIds = new Set();
     let pendingSingleCloudId = '';
     let pendingBulkCloudArmed = false;
 
     function openCloudPoolModal() {
-      selectedCloudMediaIds.clear(); pendingSingleCloudId = ''; pendingBulkCloudArmed = false;
-      updateBulkCloudDeleteBtn(); openModal('modal-cloud-pool'); refreshCloudMediaPool();
+      const lbl = document.getElementById('cloud-pool-site-label');
+      if (lbl) {
+        lbl.textContent = (cloudConfig.activeUrl && cloudConfig.activeSiteKey)
+          ? `🟢 現場キー: ${cloudConfig.activeSiteKey}`
+          : '⚠️ 同期サーバーURL・現場キー未設定';
+      }
+      selectedCloudMediaIds.clear();
+      pendingSingleCloudId = '';
+      pendingBulkCloudArmed = false;
+      updateBulkCloudDeleteBtn();
+      openModal('modal-cloud-pool');
+      refreshCloudMediaPool();
     }
-    function setCloudPoolFilter(mode) {
-      cloudPoolFilter = mode;
+
+    function setCloudPoolFilter(flt) {
+      cloudPoolFilter = flt;
       document.querySelectorAll('.cp-flt-btn').forEach(btn => {
-        const active = btn.id === `cp-flt-${mode}`;
-        btn.classList.toggle('bg-sky-600', active); btn.classList.toggle('text-white', active);
+        const active = btn.id === `cp-flt-${flt}`;
+        btn.classList.toggle('bg-sky-600', active);
+        btn.classList.toggle('text-white', active);
         btn.classList.toggle('text-slate-300', !active);
       });
       renderCloudPoolGrid();
     }
+
+    function toggleCloudMediaSelect(mediaId, checked) {
+      if (checked) selectedCloudMediaIds.add(mediaId);
+      else selectedCloudMediaIds.delete(mediaId);
+      pendingBulkCloudArmed = false;
+      updateBulkCloudDeleteBtn();
+    }
+
     function updateBulkCloudDeleteBtn() {
       const btn = document.getElementById('btn-bulk-del-cloud');
       if (!btn) return;
-      const count = selectedCloudMediaIds.size;
-      btn.classList.toggle('hidden', count === 0);
-      btn.textContent = pendingBulkCloudArmed ? `⚠️ 本当に ${count}件 削除` : `🗑️ 選択削除(${count})`;
+      const cnt = selectedCloudMediaIds.size;
+      btn.classList.toggle('hidden', cnt === 0);
+      btn.textContent = pendingBulkCloudArmed ? `⚠️ 本当に ${cnt}件 削除` : `🗑️ 選択削除(${cnt})`;
     }
-    function toggleCloudMediaSelect(mediaId, checked) {
-      if (checked) selectedCloudMediaIds.add(mediaId); else selectedCloudMediaIds.delete(mediaId);
-      pendingBulkCloudArmed = false; updateBulkCloudDeleteBtn();
-    }
+
     async function refreshCloudMediaPool() {
       const grid = document.getElementById('cloud-pool-grid');
-      const siteLbl = document.getElementById('cloud-pool-site-label');
-      const rawUrl = (cloudConfig.activeUrl || '').trim(), siteKey = (cloudConfig.activeSiteKey || '').trim();
+      if (!grid) return;
+      const rawUrl = (cloudConfig.activeUrl || '').trim();
+      const siteKey = (cloudConfig.activeSiteKey || '').trim();
       if (!rawUrl || !siteKey) {
-        if (siteLbl) siteLbl.textContent = '⚠️ 同期サーバー未設定';
-        if (grid) grid.innerHTML = `<div class="col-span-full text-center text-slate-400 py-8 space-y-2"><div>同期サーバーURLと現場キーが未設定です。</div><button onclick="closeModal('modal-cloud-pool'); openCloudModal();" class="px-3 py-1.5 bg-cyan-700 hover:bg-cyan-600 text-white rounded-lg font-bold cursor-pointer">⚙️ URL設定を開く</button></div>`;
+        grid.innerHTML = `<div class="col-span-full text-center text-slate-400 py-8">先に「⚙️ URL設定」から同期サーバーURLと現場キーを保存すると、サーバー上の豆図一覧が表示されます。</div>`;
         return;
       }
-      const site = cloudConfig.savedSites.find(s => s.siteKey === siteKey);
-      if (siteLbl) siteLbl.textContent = `現場: ${site?.siteName || siteKey} (${siteKey})`;
-      if (grid) grid.innerHTML = `<div class="col-span-full text-center text-sky-300 py-8">サーバーから豆図一覧を取得中...</div>`;
+
+      grid.innerHTML = `<div class="col-span-full text-center text-cyan-300 py-8">サーバーから豆図一覧を読み込み中...</div>`;
       try {
         const res = await fetch(`${rawUrl}/api/media`, { headers: { 'X-Site-Key': siteKey } });
         const data = await res.json();
@@ -4711,9 +4978,10 @@
         cachedServerMedia = Array.isArray(data.media) ? data.media : [];
         renderCloudPoolGrid();
       } catch (err) {
-        if (grid) grid.innerHTML = `<div class="col-span-full text-center text-rose-300 py-8">取得エラー: ${escapeHtml(err.message)}</div>`;
+        grid.innerHTML = `<div class="col-span-full text-center text-rose-300 py-8">取得エラー: ${escapeHtml(err.message)}</div>`;
       }
     }
+
     function renderCloudPoolGrid() {
       const grid = document.getElementById('cloud-pool-grid');
       if (!grid) return;
