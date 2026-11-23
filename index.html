@@ -72,7 +72,7 @@
         <button id="btn-draft-list" onclick="openTempDraftsModal()" class="px-1.5 py-1 bg-amber-950 hover:bg-amber-900 text-amber-200 font-mono text-[10px] border-l border-amber-700 cursor-pointer">0</button>
       </div>
       <button onclick="openServerMamezuModal()" class="hidden sm:inline-flex px-2 py-1 rounded bg-[#262629] hover:bg-[#343438] border border-[#3a3a3e] text-cyan-200 font-bold cursor-pointer">☁️ サーバー一覧</button>
-      <button onclick="openPresetModal()" class="px-2 py-1 rounded bg-indigo-700 hover:bg-indigo-600 text-white font-extrabold cursor-pointer">📚 雛形100種</button>
+      <button onclick="openPresetModal()" class="px-2 py-1 rounded bg-indigo-700 hover:bg-indigo-600 text-white font-extrabold cursor-pointer">📚 雛形120種</button>
       <button onclick="openCloudConfigModal()" class="px-2 py-1 rounded bg-[#262629] hover:bg-[#343438] border border-[#3a3a3e] font-bold cursor-pointer" title="接続URL・Discord設定">⚙️ URL設定</button>
       <button id="btn-toggle-mobile-ui" onclick="toggleMobileUiMode()" class="px-2 py-1 rounded bg-[#262629] hover:bg-[#343438] border border-[#3a3a3e] font-bold cursor-pointer">📱 スマホUI</button>
       <button onclick="openSendModal()" class="px-2.5 py-1 rounded bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold shadow cursor-pointer">🚀 台帳・野帳へ送る</button>
@@ -374,17 +374,17 @@
         </div>
       </div>
 
-      <!-- 2. ハッチング模様（10種類） -->
+      <!-- 2. ハッチング模様（12種類） -->
       <div class="p-2.5 rounded-lg bg-[#202024] border border-[#323238] space-y-1.5">
-        <div class="font-extrabold text-emerald-300">▨ ハッチング模様（10種）</div>
+        <div class="font-extrabold text-emerald-300">▨ ハッチング模様（12種）</div>
         <select id="sel-hatch-pattern" onchange="setHatchPattern(this.value)" class="w-full bg-[#141416] border border-[#3a3a3e] rounded px-2 py-1.5 font-bold text-white outline-none cursor-pointer"></select>
       </div>
 
-      <!-- 2-B. 略図雛形100種クイックセット -->
+      <!-- 2-B. 略図雛形120種クイックセット -->
       <div class="p-2.5 rounded-lg bg-[#202024] border border-indigo-700/70 space-y-1.5">
         <div class="flex items-center justify-between">
           <span class="font-extrabold text-indigo-300">📚 略図雛形クイックセット</span>
-          <button onclick="openPresetModal()" class="text-[10px] text-amber-300 hover:underline font-bold cursor-pointer">一覧100種</button>
+          <button onclick="openPresetModal()" class="text-[10px] text-amber-300 hover:underline font-bold cursor-pointer">一覧120種</button>
         </div>
         <select id="sel-quick-preset-100" onchange="if(this.value){ applyPresetByKey(this.value); this.value=''; }" class="w-full bg-[#141416] border border-[#3a3a3e] rounded px-2 py-1.5 font-bold text-amber-200 outline-none cursor-pointer"></select>
       </div>
@@ -468,7 +468,7 @@
         <span class="text-sm leading-none">🛠️</span><span>ツール</span>
       </button>
       <button onclick="openPresetModal()" class="py-2 rounded-lg bg-indigo-800 active:bg-indigo-600 text-white flex flex-col items-center justify-center gap-0.5 cursor-pointer">
-        <span class="text-sm leading-none">📚</span><span>雛形100</span>
+        <span class="text-sm leading-none">📚</span><span>雛形120</span>
       </button>
       <button onclick="saveTempDraftToServerAndLocal()" class="py-2 rounded-lg bg-amber-700 active:bg-amber-600 text-white flex flex-col items-center justify-center gap-0.5 cursor-pointer">
         <span class="text-sm leading-none">⏸️</span><span>一時保管</span>
@@ -482,11 +482,11 @@
     </div>
   </div>
 
-  <!-- ==================== モーダル1：略図雛形100種 ＆ マイ豆図登録・共有モーダル ==================== -->
+  <!-- ==================== モーダル1：略図雛形120種 ＆ マイ豆図登録・共有モーダル ==================== -->
   <div id="modal-presets" class="hidden fixed inset-0 bg-black/80 backdrop-blur-xs z-50 items-center justify-center p-2 sm:p-4">
     <div class="bg-[#1b1b1e] border border-[#3a3a3e] text-white rounded-2xl w-full max-w-4xl max-h-[92vh] flex flex-col overflow-hidden shadow-2xl text-xs">
       <div class="px-4 py-3 bg-[#141416] border-b border-[#2e2e32] flex items-center justify-between shrink-0">
-        <h2 class="font-extrabold text-sm">📚 建築・土木・設備・測量 略図雛形100種 ＆ マイ豆図</h2>
+        <h2 class="font-extrabold text-sm">📚 建築・土木・設備・測量 略図雛形120種 ＆ マイ豆図</h2>
         <button onclick="closeModal('modal-presets')" class="text-slate-400 hover:text-white text-lg px-2 cursor-pointer">✕</button>
       </div>
 
@@ -509,11 +509,11 @@
       <!-- カテゴリタブ ＆ キーワード検索 -->
       <div class="px-3 py-2 bg-[#1b1b1e] border-b border-[#2e2e32] flex flex-wrap items-center justify-between gap-2 shrink-0">
         <div class="flex flex-wrap items-center gap-1 font-extrabold text-[11px]">
-          <button id="pcat-all" onclick="setPresetCategory('all')" class="pcat-btn px-2.5 py-1 rounded-lg bg-indigo-600 text-white cursor-pointer">すべて (100)</button>
-          <button id="pcat-struct" onclick="setPresetCategory('struct')" class="pcat-btn px-2.5 py-1 rounded-lg bg-[#2b2b30] text-slate-300 cursor-pointer">基礎・配筋 (25)</button>
-          <button id="pcat-finish" onclick="setPresetCategory('finish')" class="pcat-btn px-2.5 py-1 rounded-lg bg-[#2b2b30] text-slate-300 cursor-pointer">開口・防水・仕上 (25)</button>
-          <button id="pcat-mep" onclick="setPresetCategory('mep')" class="pcat-btn px-2.5 py-1 rounded-lg bg-[#2b2b30] text-slate-300 cursor-pointer">設備・配管・電気 (24)</button>
-          <button id="pcat-civil" onclick="setPresetCategory('civil')" class="pcat-btn px-2.5 py-1 rounded-lg bg-[#2b2b30] text-slate-300 cursor-pointer">仮設・土木・測量 (26)</button>
+          <button id="pcat-all" onclick="setPresetCategory('all')" class="pcat-btn px-2.5 py-1 rounded-lg bg-indigo-600 text-white cursor-pointer">すべて (120)</button>
+          <button id="pcat-struct" onclick="setPresetCategory('struct')" class="pcat-btn px-2.5 py-1 rounded-lg bg-[#2b2b30] text-slate-300 cursor-pointer">基礎・配筋 (30)</button>
+          <button id="pcat-finish" onclick="setPresetCategory('finish')" class="pcat-btn px-2.5 py-1 rounded-lg bg-[#2b2b30] text-slate-300 cursor-pointer">開口・防水・仕上 (30)</button>
+          <button id="pcat-mep" onclick="setPresetCategory('mep')" class="pcat-btn px-2.5 py-1 rounded-lg bg-[#2b2b30] text-slate-300 cursor-pointer">設備・配管・電気 (29)</button>
+          <button id="pcat-civil" onclick="setPresetCategory('civil')" class="pcat-btn px-2.5 py-1 rounded-lg bg-[#2b2b30] text-slate-300 cursor-pointer">仮設・土木・測量 (31)</button>
         </div>
         <input id="inp-preset-search" type="text" placeholder="🔍 キーワード検索（例：基礎・スリーブ・足場）" oninput="renderPresetCardsGrid()" class="w-full sm:w-64 bg-[#141416] border border-[#3a3a3e] rounded-lg px-2.5 py-1 text-white outline-none focus:border-indigo-400" />
       </div>
@@ -880,19 +880,29 @@
         { id: 'dots', label: '⑦ ドット点描' },
         { id: 'concrete', label: '⑧ コンクリート' },
         { id: 'brick', label: '⑨ レンガ積み' },
-        { id: 'insulation', label: '⑩ 断熱材(連続波)' }
+        { id: 'insulation', label: '⑩ 断熱材(連続波)' },
+        { id: 'gravel', label: '⑪ 砕石・割栗石(三角礫)' },
+        { id: 'wood', label: '⑫ 木材・合板(木目)' }
       ],
       lineStyles: [
         { id: 'solid', label: '① 実線 ━━' },
-        { id: 'double', label: '② 二重線 ══' },
-        { id: 'triple', label: '③ 三重線 ☰' },
-        { id: 'wavy', label: '④ 波線 〰️' },
-        { id: 'zigzag', label: '⑤ ギザギザ線 ⚡' },
+        { id: 'double', label: '② 二重線 ══（壁・管路）' },
+        { id: 'triple', label: '③ 三重線 ☰（複合壁）' },
+        { id: 'wavy', label: '④ 波線 〰️（省略・水面）' },
+        { id: 'zigzag', label: '⑤ ギザギザ線 ⚡（破断）' },
         { id: 'scallop', label: '⑥ もこもこ雲線 ☁️' },
         { id: 'thick_thin', label: '⑦ 太細複合線 ▬─' },
-        { id: 'rail', label: '⑧ 線路目盛り線 ╪╪' },
-        { id: 'dashed', label: '⑨ 破線 ╌╌' },
-        { id: 'dashdot', label: '⑩ 一点鎖線 ╍╍' }
+        { id: 'rail', label: '⑧ 線路・目盛り線 ╪╪' },
+        { id: 'dashed', label: '⑨ 破線 ╌╌（隠れ線）' },
+        { id: 'dashdot', label: '⑩ 一点鎖線 ╍╍（通り芯）' },
+        { id: 'dashdot2', label: '⑪ 二点鎖線 ╍··╍（敷地境界）' },
+        { id: 'pipe_water', label: '⑫ 給水管線 ━W━' },
+        { id: 'pipe_drain', label: '⑬ 排水管線 ╌D╌' },
+        { id: 'elec_wire', label: '⑭ 電気配線・雷線 ━⚡━' },
+        { id: 'weld_fillet', label: '⑮ 隅肉溶接連続線 ▲▲▲' },
+        { id: 'earth_ground', label: '⑯ 地盤・GL線 〒〒〒' },
+        { id: 'fence_x', label: '⑰ 仮囲い・柵線 ×━×' },
+        { id: 'arrow_flow', label: '⑱ 方向矢印連続線 ➤━➤' }
       ],
       dashPatterns: [
         { id: 'none', label: '破線: 線種に従う', mult: null },
@@ -902,7 +912,7 @@
         { id: 'dash_xl', label: '04. 超長破線', mult: [10.5, 4.0] },
         { id: 'dot_s', label: '05. 細密点線', mult: [0.6, 1.4] },
         { id: 'dot_m', label: '06. 標準点線', mult: [0.9, 2.5] },
-        { id: 'dot_l', label: '07. 広め点線', mult: [1.0, 4.5] },
+        { id: 'dot_l', label: '07. 間隔広め点線', mult: [1.0, 4.5] },
         { id: 'dashdot1', label: '08. 一点鎖線(標準)', mult: [5.5, 1.6, 0.8, 1.6] },
         { id: 'dashdot1_l', label: '09. 一点鎖線(通り芯)', mult: [9.0, 2.0, 1.0, 2.0] },
         { id: 'dashdot2', label: '10. 二点鎖線(標準)', mult: [5.5, 1.4, 0.8, 1.4, 0.8, 1.4] },
@@ -910,7 +920,12 @@
         { id: 'dashdot3', label: '12. 三点鎖線', mult: [5.5, 1.3, 0.7, 1.3, 0.7, 1.3, 0.7, 1.3] },
         { id: 'long_short', label: '13. 長短交互破線', mult: [6.5, 1.8, 2.5, 1.8] },
         { id: 'double_dash', label: '14. 二連破線', mult: [3.0, 1.2, 3.0, 3.8] },
-        { id: 'sparse_dash', label: '15. まばら破線', mult: [2.5, 5.5] }
+        { id: 'sparse_dash', label: '15. まばら破線', mult: [2.5, 5.5] },
+        { id: 'axis_xl', label: '16. 通り芯専用(極長一点)', mult: [13.0, 2.2, 1.0, 2.2] },
+        { id: 'boundary_xl', label: '17. 境界専用(極長二点)', mult: [13.0, 2.0, 1.0, 2.0, 1.0, 2.0] },
+        { id: 'demolish_eq', label: '18. 既存撤去線(均等破線)', mult: [4.5, 4.5] },
+        { id: 'hidden_dense', label: '19. 隠れ線・埋設(密破線)', mult: [2.2, 1.8] },
+        { id: 'plan_long', label: '20. 仮設・計画線(長破線)', mult: [8.0, 1.5] }
       ],
       arrowTypes: [
         { id: 'none', label: 'なし' },
@@ -930,7 +945,7 @@
     };
 
     function getStyleDefs() {
-      return window.MAMEZU_STYLE_DEFS || FALLBACK_STYLE_DEFS;
+      return window.GenbaMamezuShared?.STYLE_DEFS || window.MAMEZU_STYLE_DEFS || FALLBACK_STYLE_DEFS;
     }
 
     // ==================== アプリ状態管理 ====================
@@ -1425,7 +1440,7 @@
       const quickPresetSel = document.getElementById('sel-quick-preset-100');
       if (quickPresetSel) {
         const presets = getPresetsArray100();
-        quickPresetSel.innerHTML = `<option value="" class="bg-[#18181a]">-- 雛形100種から即セット --</option>` +
+        quickPresetSel.innerHTML = `<option value="" class="bg-[#18181a]">-- 雛形${presets.length}種から即セット --</option>` +
           presets.map(it => `<option value="${escapeHtml(it.key)}" class="bg-[#18181a]">${escapeHtml(it.name)}</option>`).join('');
       }
     }
@@ -2321,6 +2336,9 @@
     }
 
     function drawStyledSegment(ctx, x1, y1, x2, y2, obj) {
+      if (window.GenbaMamezuShared?.Renderer?.drawStyledSegment) {
+        return window.GenbaMamezuShared.Renderer.drawStyledSegment(ctx, x1, y1, x2, y2, obj);
+      }
       const col = obj.color || '#dc2626';
       const sw = obj.strokeWidth || 3.5;
       const ls = obj.lineStyle || 'solid';
@@ -2328,9 +2346,12 @@
       const len = Math.hypot(x2 - x1, y2 - y1);
       if (len < 1) return;
 
-      const nx = -Math.sin(ang);
-      const ny = Math.cos(ang);
+      const ux = Math.cos(ang);
+      const uy = Math.sin(ang);
+      const nx = -uy;
+      const ny = ux;
       ctx.strokeStyle = col;
+      ctx.fillStyle = col;
       ctx.lineWidth = sw;
       ctx.setLineDash(getDashArrayForObject(obj, sw));
 
@@ -2356,9 +2377,10 @@
         ctx.lineWidth = Math.max(1.4, sw * 0.6);
         ctx.beginPath(); ctx.moveTo(x1 + nx * g, y1 + ny * g); ctx.lineTo(x2 + nx * g, y2 + ny * g); ctx.stroke();
         ctx.beginPath(); ctx.moveTo(x1 - nx * g, y1 - ny * g); ctx.lineTo(x2 - nx * g, y2 - ny * g); ctx.stroke();
+        ctx.setLineDash([]);
         for (let d = 10; d < len - 6; d += 14) {
-          const px = x1 + Math.cos(ang) * d;
-          const py = y1 + Math.sin(ang) * d;
+          const px = x1 + ux * d;
+          const py = y1 + uy * d;
           ctx.beginPath(); ctx.moveTo(px + nx * (g + 2), py + ny * (g + 2)); ctx.lineTo(px - nx * (g + 2), py - ny * (g + 2)); ctx.stroke();
         }
       } else if (ls === 'wavy' || ls === 'zigzag' || ls === 'scallop') {
@@ -2383,6 +2405,72 @@
           }
         }
         ctx.stroke();
+      } else if (ls === 'pipe_water' || ls === 'pipe_drain') {
+        const tag = ls === 'pipe_water' ? 'W' : 'D';
+        if (ls === 'pipe_drain' && (!obj.dashPattern || obj.dashPattern === 'none')) ctx.setLineDash([sw * 3.5, sw * 2.2]);
+        ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.font = `bold ${Math.max(11, Math.round(sw * 3.2))}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        for (let d = 34; d < len - 24; d += 68) {
+          const px = x1 + ux * d, py = y1 + uy * d;
+          ctx.fillStyle = '#ffffff'; ctx.fillRect(px - 8, py - 8, 16, 16);
+          ctx.fillStyle = col; ctx.fillText(tag, px, py + 1);
+        }
+        ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+      } else if (ls === 'elec_wire') {
+        ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+        ctx.setLineDash([]);
+        const h = Math.max(6, sw * 1.8);
+        for (let d = 30; d < len - 22; d += 64) {
+          const px = x1 + ux * d, py = y1 + uy * d;
+          ctx.beginPath();
+          ctx.moveTo(px - ux * 5 - nx * h, py - uy * 5 - ny * h);
+          ctx.lineTo(px + nx * 2, py + ny * 2);
+          ctx.lineTo(px - nx * 2, py - ny * 2);
+          ctx.lineTo(px + ux * 5 + nx * h, py + uy * 5 + ny * h);
+          ctx.stroke();
+        }
+      } else if (ls === 'weld_fillet') {
+        ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+        ctx.setLineDash([]);
+        const sz = Math.max(7, sw * 2.1);
+        for (let d = 14; d < len - 10; d += 22) {
+          const px = x1 + ux * d, py = y1 + uy * d;
+          ctx.beginPath();
+          ctx.moveTo(px - ux * sz * 0.5, py - uy * sz * 0.5);
+          ctx.lineTo(px + ux * sz * 0.5, py + uy * sz * 0.5);
+          ctx.lineTo(px - nx * sz, py - ny * sz);
+          ctx.closePath(); ctx.fill();
+        }
+      } else if (ls === 'earth_ground') {
+        ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+        ctx.setLineDash([]);
+        for (let d = 16; d < len - 12; d += 36) {
+          const px = x1 + ux * d, py = y1 + uy * d;
+          for (let k = 0; k < 3; k++) {
+            const ox = px + ux * (k - 1) * 5, oy = py + uy * (k - 1) * 5;
+            ctx.beginPath(); ctx.moveTo(ox, oy); ctx.lineTo(ox + (nx - ux * 0.5) * 9, oy + (ny - uy * 0.5) * 9); ctx.stroke();
+          }
+        }
+      } else if (ls === 'fence_x') {
+        ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+        ctx.setLineDash([]);
+        const r = Math.max(5, sw * 1.4);
+        for (let d = 18; d < len - 14; d += 36) {
+          const px = x1 + ux * d, py = y1 + uy * d;
+          ctx.beginPath();
+          ctx.moveTo(px - r, py - r); ctx.lineTo(px + r, py + r);
+          ctx.moveTo(px + r, py - r); ctx.lineTo(px - r, py + r);
+          ctx.stroke();
+        }
+      } else if (ls === 'arrow_flow') {
+        ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+        ctx.setLineDash([]);
+        for (let d = 28; d < len - 18; d += 56) {
+          drawArrowMarker(ctx, 'filled', x1 + ux * d, y1 + uy * d, ang, col, Math.max(2.5, sw * 0.8));
+        }
       } else {
         ctx.beginPath();
         ctx.moveTo(x1, y1);
@@ -2393,6 +2481,9 @@
     }
 
     function drawHatchArea(ctx, o) {
+      if (window.GenbaMamezuShared?.Renderer?.drawHatchArea) {
+        return window.GenbaMamezuShared.Renderer.drawHatchArea(ctx, o);
+      }
       const col = o.color || '#dc2626';
       const pat = o.hatchPattern || 'diag45';
       const x = o.x, y = o.y, w = o.w, h = o.h;
@@ -2455,6 +2546,23 @@
           for (let gx = x; gx <= x + w; gx += 12) {
             ctx.lineTo(gx + 6, gy - 7);
             ctx.lineTo(gx + 12, gy + 7);
+          }
+          ctx.stroke();
+        }
+      }
+      if (pat === 'gravel') {
+        for (let gx = x + 6; gx < x + w; gx += 18) {
+          for (let gy = y + 6; gy < y + h; gy += 16) {
+            ctx.beginPath(); ctx.moveTo(gx, gy); ctx.lineTo(gx + 8, gy + 3); ctx.lineTo(gx + 3, gy + 9); ctx.closePath(); ctx.stroke();
+          }
+        }
+      }
+      if (pat === 'wood') {
+        for (let gy = y + 7; gy < y + h; gy += 11) {
+          ctx.beginPath();
+          ctx.moveTo(x, gy);
+          for (let gx = x; gx <= x + w; gx += 32) {
+            ctx.quadraticCurveTo(gx + 16, gy - 4, gx + 32, gy);
           }
           ctx.stroke();
         }
@@ -3818,7 +3926,27 @@
       { key: 'wellpoint_drain', cat: 'civil', name: '💧 97. 釜場排水・ノッチタンク濁水処理', desc: '釜場ポンプ揚水・沈砂槽・放流ルート' },
       { key: 'traverse_survey', cat: 'civil', name: '🧭 98. トラバース（多角）測量 路線図', desc: '測点T1〜T4の夾角・辺長スケッチ' },
       { key: 'safety_passage', cat: 'civil', name: '🚶 99. 歩行者用仮設通路・スロープ養生', desc: 'カラーコーンバー・誘導灯・段差解消板' },
-      { key: 'soil_compaction', cat: 'civil', name: '🚜 100. 路体盛土・層状転圧管理断面', desc: '仕上がり厚300mmごとの転圧回数管理図' }
+      { key: 'soil_compaction', cat: 'civil', name: '🚜 100. 路体盛土・層状転圧管理断面', desc: '仕上がり厚300mmごとの転圧回数管理図' },
+      { key: 'beam_diag_rebar', cat: 'struct', name: '💎 101. 地中梁貫通補強筋（ダイヤ筋）', desc: 'スリーブ周囲の斜め補強筋・あばら筋詳細' },
+      { key: 'foundation_insul', cat: 'struct', name: '🧊 102. 基礎断熱・スタイロフォーム納まり', desc: '基礎立上り内側断熱材・防蟻処理断面' },
+      { key: 'steel_web_hole', cat: 'struct', name: '⭕ 103. 鉄骨梁貫通孔・補強リング詳細', desc: 'H形鋼ウェブ貫通スリーブ・溶接補強リング' },
+      { key: 'stair_landing_rebar', cat: 'struct', name: '🪜 104. 階段踊り場・ささら桁配筋断面', desc: '段鼻筋・踊り場スラブ定着配筋図' },
+      { key: 'cb_wall_rebar', cat: 'struct', name: '🧱 105. 境界塀・CBブロック擁壁配筋断面', desc: '縦筋・横筋・控壁・基礎コン断面' },
+      { key: 'roof_drain_detail', cat: 'finish', name: '🕳️ 106. 屋上ルーフドレン防水納まり', desc: '鋳鉄製ドレン・増張り防水シート押え' },
+      { key: 'entrance_sill', cat: 'finish', name: '🚪 107. 玄関ドア下枠・沓摺り防水納まり', desc: 'ステンレス沓摺り・モルタル充填・止水' },
+      { key: 'eave_vent', cat: 'finish', name: '🌬️ 108. 軒天換気口・防火ダンパー納まり', desc: '不燃軒天ボード・有孔換気金物断面' },
+      { key: 'floor_trim', cat: 'finish', name: '📏 109. 床見切り材・異種床材段差納まり', desc: 'タイルカーペットと長尺シート見切り' },
+      { key: 'siding_vent', cat: 'finish', name: '🏠 110. 外壁サイディング通気胴縁・水切り', desc: '通気層15mm・防虫網・土台水切り断面' },
+      { key: 'water_meter_box', cat: 'mep', name: '🚰 111. 屋外給水メーター・止水栓ボックス', desc: '量水器筐・逆止弁・埋設給水管接続' },
+      { key: 'drain_air_valve', cat: 'mep', name: '🌬️ 112. 空調ドレンアップ・通気弁（ドルゴ）', desc: '排水立て管頂部通気弁・トラップ封水保護' },
+      { key: 'temp_power_panel', cat: 'mep', name: '⚡ 113. 仮設工事用分電盤・漏電遮断系統', desc: '主幹ELB・分岐ブレーカー・接地抵抗確認' },
+      { key: 'ceiling_light_cut', cat: 'mep', name: '💡 114. 照明器具・天井ボード開口補強位置', desc: 'ダウンライト埋込穴・野縁干渉回避図' },
+      { key: 'outdoor_pipe_rack', cat: 'mep', name: '🔩 115. 屋外露出配管・保温ラッキング納まり', desc: 'カラー鋼板ラッキング・支持金物ピッチ' },
+      { key: 'steel_plate_ramp', cat: 'civil', name: '🛣️ 116. 敷鉄板・仮設構台乗り入れスロープ', desc: '歩道切り下げ養生・敷鉄板溶接連結図' },
+      { key: 'catch_basin_detail', cat: 'civil', name: '🌊 117. 集水桝・泥溜め・グレーチング詳細', desc: '泥溜め深さ150mm・流出管インバート' },
+      { key: 'heavy_machinery_zone', cat: 'civil', name: '🚜 118. 重機作業半径・立入禁止バリケード', desc: 'バックホウ旋回半径・誘導員・単管柵配置' },
+      { key: 'boundary_stake', cat: 'civil', name: '📍 119. 境界杭（コンクリート杭・金属標）', desc: '引照点2点からの距離控・境界標復元図' },
+      { key: 'weep_hole_filter', cat: 'civil', name: '💧 120. 擁壁水抜き穴・裏込めフィルタ施工図', desc: '吸出し防止マット・砕石フィルタ・塩ビ管勾配' }
     ];
 
     function buildBuiltinPresetObjects100(key) {
@@ -3948,12 +4076,38 @@
         wellpoint_drain: [R(180, 260, 130, 160, b, 4, 'solid', true), L(245, 340, 245, 160, b, 5), L(245, 160, 520, 160, b, 5, 'solid', 'none', 'filled'), R(520, 140, 260, 160, g, 4, 'solid', true), T(205, 445, '釜場ポンプ', b, 20), T(565, 225, 'ノッチタンク濁水処理', g, 20)],
         traverse_survey: [L(200, 380, 440, 140, b, 4), L(440, 140, 760, 220, b, 4), L(760, 220, 620, 430, b, 4), C(188, 368, 24, 24, r), C(428, 128, 24, 24, r), C(748, 208, 24, 24, r), C(608, 418, 24, 24, r), T(155, 415, 'T.1', r, 22), T(425, 115, 'T.2', r, 22), T(775, 220, 'T.3', r, 22), T(635, 445, 'T.4', r, 22)],
         safety_passage: [L(140, 200, 820, 200, c, 4), L(140, 360, 820, 360, c, 4), L(180, 280, 780, 280, g, 5, 'solid', 'none', 'filled'), R(150, 360, 660, 35, r, 3, 'solid', true), T(360, 260, '歩行者安全通路（幅1.2m以上）', g, 22)],
-        soil_compaction: [R(200, 350, 560, 70, gy, 3, 'solid', true), R(200, 280, 560, 70, g, 3, 'solid', true), R(200, 210, 560, 70, b, 3, 'solid', true), D(165, 210, 165, 280, '1層 300mm', r), LD(620, 245, 700, 130, '振動ローラー転圧 6回確認', r)]
+        soil_compaction: [R(200, 350, 560, 70, gy, 3, 'solid', true), R(200, 280, 560, 70, g, 3, 'solid', true), R(200, 210, 560, 70, b, 3, 'solid', true), D(165, 210, 165, 280, '1層 300mm', r), LD(620, 245, 700, 130, '振動ローラー転圧 6回確認', r)],
+        beam_diag_rebar: [R(180, 130, 600, 300, c, 4), C(420, 220, 120, 120, b, 4, true), L(350, 280, 480, 150, r, 4), L(480, 150, 610, 280, r, 4), L(350, 280, 480, 410, r, 4), L(480, 410, 610, 280, r, 4), LD(555, 205, 680, 120, 'ダイヤ斜め補強筋 4-D13', r)],
+        foundation_insul: [R(260, 130, 120, 310, c, 4), R(380, 340, 340, 100, c, 4), H(380, 150, 45, 190, 'insulation', '#38bdf8'), LD(425, 230, 550, 160, '基礎内断熱材 t=50', b)],
+        steel_web_hole: [R(180, 140, 600, 280, c, 4), C(410, 210, 140, 140, b, 4, true), C(392, 192, 176, 176, r, 4, false), L(392, 280, 568, 280, r, 3, 'weld_fillet'), LD(550, 210, 670, 130, '補強リング全周隅肉溶接', r)],
+        stair_landing_rebar: [L(160, 420, 320, 420, c, 4), L(320, 420, 320, 340, c, 4), L(320, 340, 460, 340, c, 4), L(460, 340, 760, 340, c, 4), L(180, 445, 470, 365, r, 4), L(470, 365, 740, 365, r, 4), LD(580, 365, 650, 240, '踊り場主筋定着長さ確認', r)],
+        cb_wall_rebar: [R(390, 110, 120, 260, c, 4), H(394, 114, 112, 252, 'brick', gy), R(280, 370, 340, 80, c, 4), L(450, 120, 450, 430, r, 4.5), LD(450, 220, 580, 150, 'CB縦筋 D13@400 基礎定着', r)],
+        roof_drain_detail: [R(180, 310, 600, 110, c, 4), R(420, 310, 120, 75, b, 4, 'solid', true), L(180, 298, 420, 310, g, 5), L(540, 310, 780, 298, g, 5), LD(480, 350, 630, 210, 'ルーフドレン・増張り防水', r)],
+        entrance_sill: [R(220, 320, 520, 110, c, 4), R(420, 275, 120, 45, b, 4, 'solid', true), L(410, 320, 550, 320, r, 5), LD(480, 275, 610, 180, 'SUS沓摺り・下枠モルタル充填', r)],
+        eave_vent: [L(180, 200, 620, 310, c, 5), R(240, 310, 380, 24, gy, 3), R(360, 310, 140, 24, r, 4, 'solid', true), LD(430, 334, 540, 420, '軒天有孔換気金物・防火仕様', r)],
+        floor_trim: [R(180, 310, 600, 110, c, 4), R(180, 285, 290, 25, b, 3, 'solid', true), R(490, 290, 290, 20, g, 3, 'solid', true), R(470, 282, 20, 28, r, 3, 'solid', true), LD(480, 282, 560, 190, 'アルミ見切り材・段差解消', r)],
+        siding_vent: [R(260, 110, 110, 340, c, 4), H(264, 114, 102, 332, 'wood', gy), R(370, 110, 24, 340, g, 2), R(394, 110, 36, 340, b, 4, 'solid', true), L(370, 450, 455, 465, r, 4), LD(382, 240, 510, 170, '通気胴縁 t=15・土台水切り', r)],
+        water_meter_box: [L(140, 220, 820, 220, c, 4, 'earth_ground'), R(360, 220, 240, 140, b, 4, 'solid', true), L(160, 330, 360, 330, b, 5, 'pipe_water'), L(600, 330, 800, 330, b, 5, 'pipe_water'), T(410, 295, '水道メーターBOX', b, 22)],
+        drain_air_valve: [L(320, 140, 320, 450, r, 6, 'pipe_drain'), L(320, 280, 680, 300, r, 5, 'pipe_drain'), R(298, 95, 44, 45, b, 4, 'solid', true), LD(342, 115, 480, 115, '通気弁（ドルゴ）・封水保護', b)],
+        temp_power_panel: [R(320, 120, 320, 260, c, 4), R(360, 160, 100, 70, r, 3, 'solid', true), R(500, 160, 100, 70, b, 3, 'solid', true), L(480, 380, 480, 470, g, 5, 'elec_wire'), T(370, 200, '主幹ELB', r, 18), T(510, 200, '分岐MCCB', b, 18)],
+        ceiling_light_cut: [R(220, 130, 520, 300, c, 4), L(220, 220, 740, 220, b, 3, 'dashed'), L(220, 340, 740, 340, b, 3, 'dashed'), C(445, 245, 70, 70, r, 4, true), LD(515, 280, 620, 175, 'DL開口 φ150（野縁離隔確認）', r)],
+        outdoor_pipe_rack: [R(200, 220, 560, 65, b, 4, 'solid', true), L(300, 285, 300, 420, c, 5), L(660, 285, 660, 420, c, 5), L(160, 420, 800, 420, c, 4, 'earth_ground'), LD(480, 220, 580, 135, '保温＋鋼板ラッキング仕上げ', r)],
+        steel_plate_ramp: [L(120, 360, 340, 360, c, 4), L(340, 360, 460, 280, c, 4), L(460, 280, 840, 280, c, 4), L(320, 352, 470, 272, r, 7), LD(400, 305, 520, 180, '敷鉄板 t=22 乗り入れ養生', r)],
+        catch_basin_detail: [R(340, 150, 280, 290, c, 4), L(150, 260, 340, 270, b, 5), L(620, 290, 810, 300, b, 5), R(340, 135, 280, 15, g, 4), D(645, 300, 645, 440, '泥溜 150', r)],
+        heavy_machinery_zone: [R(410, 230, 140, 100, '#f59e0b', 4, 'solid', true), C(280, 80, 400, 400, r, 3.5, false), R(220, 50, 520, 460, r, 3, 'fence_x'), T(340, 115, '旋回作業半径・立入禁止', r, 22)],
+        boundary_stake: [R(445, 220, 70, 110, c, 4, 'solid', true), L(480, 275, 220, 150, b, 3, 'dashed'), L(480, 275, 740, 160, b, 3, 'dashed'), T(435, 360, '境界標 No.4', r, 22), T(180, 135, '引照点K1 (L=3.42m)', b, 20), T(650, 145, '引照点K2 (L=4.15m)', b, 20)],
+        weep_hole_filter: [R(260, 110, 100, 350, c, 4), H(360, 140, 150, 320, 'gravel', gy), L(240, 340, 420, 325, b, 6), R(420, 295, 35, 65, g, 3, 'solid', true), LD(438, 295, 560, 195, '吸出し防止マット＋砕石フィルタ', r)]
       };
       return Array.isArray(map[key]) ? map[key] : [R(240, 140, 480, 280, c, 4), LD(480, 280, 660, 140, '施工確認箇所', r)];
     }
 
     function getPresetsArray100() {
+      if (Array.isArray(window.GenbaMamezuShared?.PRESETS) && window.GenbaMamezuShared.PRESETS.length > 0) {
+        return window.GenbaMamezuShared.PRESETS;
+      }
+      if (Array.isArray(window.MAMEZU_PRESETS_120) && window.MAMEZU_PRESETS_120.length > 0) {
+        return window.MAMEZU_PRESETS_120;
+      }
       if (Array.isArray(window.MAMEZU_PRESETS_100) && window.MAMEZU_PRESETS_100.length > 0) {
         return window.MAMEZU_PRESETS_100;
       }
@@ -4006,9 +4160,9 @@
     }
     function applyPresetByKey(key, skipUndoAndToast = false) {
       if (!skipUndoAndToast) pushUndoSnapshot();
-      const builder = typeof window.buildPresetObjects100 === 'function'
-        ? window.buildPresetObjects100
-        : buildBuiltinPresetObjects100;
+      const builder = typeof window.GenbaMamezuShared?.buildPresetObjects === 'function'
+        ? window.GenbaMamezuShared.buildPresetObjects
+        : (typeof window.buildPresetObjects100 === 'function' ? window.buildPresetObjects100 : buildBuiltinPresetObjects100);
       state.objects = key === 'blank' ? [] : JSON.parse(JSON.stringify(builder(key)));
 
       const meta = getPresetsArray100().find(it => it.key === key);
